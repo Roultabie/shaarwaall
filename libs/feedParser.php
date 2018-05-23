@@ -45,7 +45,7 @@ class feedParser
     * @return bool true if $uri is a valid atom feed, else false.
     *
     * @access private
-    * since Method available since start of project
+    * @since Method available since start of project
     */
     private function isValid($uri)
     {
