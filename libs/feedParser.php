@@ -18,11 +18,6 @@
 class feedParser
 {
 
-    function __construct()
-    {
-        #
-    }
-
     /**
     * Return a simplexml feed object of $uri (local or http(s).
     *
