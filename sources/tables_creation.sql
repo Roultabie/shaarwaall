@@ -13,3 +13,21 @@ CREATE TABLE `flow` (
  PRIMARY KEY (`id`),
  UNIQUE KEY `UNIQUE` (`link_hash`(191)) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+CREATE TABLE `sharers` (
+ `id` smallint(6) NOT NULL AUTO_INCREMENT,
+ `title` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+ `subtitle` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+ `updated` datetime NOT NULL,
+ `feed` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+ `author` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+ `uri` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+CREATE TABLE `tags` (
+ `tag` varchar(255) NOT NULL,
+ `hits` mediumint(9) DEFAULT '1',
+ PRIMARY KEY (`tag`),
+ KEY `tag` (`tag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
