@@ -32,7 +32,7 @@ class feedParser
     {
         $object = '';
         if ($this->isvalid($uri)) {
-            $object = simplexml_load_file($uri);
+            $object = simplexml_load_file($uri, 'SimpleXMLElement', LIBXML_NOCDATA);
         }
         return $object;
     }
