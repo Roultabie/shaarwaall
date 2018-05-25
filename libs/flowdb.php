@@ -28,15 +28,15 @@ class flowDb
 
                     foreach($obj->entry as $entry) {
                         if (count($entry->category) > 0) { // Insert or update tag table if tag exist
-                            $tag = '';
+                            $tags = '';
+                            $tQuery = "INSERT INTO tags(tag)
+                                VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
+                            $tStmt = dbConnexion::getInstance()->prepare($tQuery);
+                            $tStmt->bindParam(':tag', $tag, PDO::PARAM_STR);
                             foreach($entry->category as $elements) {
-                                $tQuery = "INSERT INTO tags(tag)
-                                            VALUES (:tag)
-                                            ON DUPLICATE KEY UPDATE hits = hits+1;";
-                                $tStmt = dbConnexion::getInstance()->prepare($tQuery);
-                                $tStmt->bindValue(':tag', trim($elements['term']), PDO::PARAM_STR);
+                                $tag = trim($elements['term']);
                                 $tStmt->execute();
-                                $tags .= $elements['term'];
+                                $tags .= $elements['term'] . ' ';
                             }
                         }
                         $origin    = $this->linkNotExists($entry->link['href']);
@@ -82,7 +82,7 @@ class flowDb
             $stmt->closeCursor();
             $stmt = NULL;
             var_dump($result);
-            if (!is_array($result)) {
+            if (count($result) === 0) {
                 $return = $hash;
             }
             else {
