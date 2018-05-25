@@ -45,22 +45,16 @@ class flowDb
                         $permalink = substr($entry->id, -6);
                         $published = substr($entry->published, 0, -6);
                         $updated   = substr($entry->updated, 0, -6);
-                        if (is_int($origin)) {
-                            $link_hash  = NULL;
-                            $firstShare = $origin;
-                        }
-                        else {
-                            $link_hash  = $origin;
-                            $firstShare = '';
-                        }
                         $sharer    = $id;
+                        $link_hash = is_int($origin) ? NULL : $origin;
                         $link      = $entry->link['href'];
                         $title     = $entry->title;
                         $content   = $entry->content;
-                        $taglist   = $tags;
+                        $taglist   = isset($tags) ? $tags : '';
                         $permalink = substr($entry->id, -6);
                         $published = substr($entry->published, 0, -6);
                         $updated   = substr($entry->updated, 0, -6);
+                        $firstShare = is_int($origin) ? $origin : '';
                         $smallHash = $this->smallHash(rand() . $permalink);
                         $stmt->execute();
                     }
@@ -87,7 +81,7 @@ class flowDb
                 $return = $hash;
             }
             else {
-                $return = (string)$result->sharer;
+                $return = (int)$result[0]->sharer;
             }
         }
         return $return;
