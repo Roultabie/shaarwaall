@@ -75,7 +75,7 @@ class flowDb
                                               'published' => $published,
                                               'updated'   => $updated,
                                               'content'   => $entry->content,
-                                              'tags'      => $tags]
+                                              'tags'      => $tags,];
                     }
                 }
             }
@@ -104,7 +104,7 @@ class flowDb
 
     public function getSharers()
     {
-        query = 'SELECT id, title, updated, feed, uri FROM sharers;';
+        $query = 'SELECT id, title, updated, feed, uri FROM sharers;';
         $stmt  = dbConnexion::getInstance()->prepare($query);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_OBJ);
