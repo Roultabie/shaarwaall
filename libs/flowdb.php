@@ -117,4 +117,29 @@ class flowDb
         $hash = str_replace('=', '@', $hash);
         return $hash;
     }
+
+    public function addSharer($obj)
+    {
+        if (is_object($obj)) {
+            $query = 'INSERT INTO sharers (title, subtitle, updated, feed, author, uri)
+                VALUES (:title, :subtitle, :updated, :feed, :author, :uri);';
+            $stmt = dbConnexion::getInstance()->prepare($query);
+            $stmt->bindParam(':title', $title, PDO::PARAM_STR);
+            $stmt->bindParam(':subtitle', $subtitle, PDO::PARAM_STR);
+            $stmt->bindParam(':updated', $updated, PDO::PARAM_STR);
+            $stmt->bindParam(':feed', $feed, PDO::PARAM_STR);
+            $stmt->bindParam(':author', $author, PDO::PARAM_STR);
+            $stmt->bindParam(':uri', $uri, PDO::PARAM_STR);
+
+            $title    = $obj->title;
+            $subtitle = $obj->subtitle;
+            $updated  = $obj->updated;
+            $feed     = $obj->author->uri . '?' . http_build_query(['do' => 'atom']);
+            $author   = $obj->author->name;
+            $uri      = $obj->author->uri;
+            $stmt->execute();
+            $stmt->closeCursor();
+            $stmt = NULL;
+        }
+    }
 }
