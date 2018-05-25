@@ -14,5 +14,5 @@ foreach($sharers as $sharer) {
 }
 
 echo '<pre>';
-//var_dump($flow);
+//var_dump($sharers);
 echo '</pre>';
