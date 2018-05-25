@@ -1,17 +1,25 @@
 <?php
+$config = array (
+    'dbHost' => 'localhost',
+    'dbName' => 'shaarwaall',
+    'dbUser' => 'root',
+    'dbPass' => 'm&t@ll1k',
+    'tblPrefix' => '',
+);
 
-require_once('libs/feedParser.php');
+require_once 'libs/feedParser.php';
+require_once 'libs/mysql.php';
+require_once 'libs/flowdb.php';
 
-$feed = new feedParser();
+$flowDb = new flowDb();
+$feed   = new feedParser();
 
-$result = $feed->loadFeed('https://daniel.gorgones.net/shaarli/?do=atom');
-// $rss->loadXml('https://korben.info/feed');
-// $rss->loadXml('https://google.fr');
-
-// $rss->loadXml('tests/rss1.xml');
-// $rss->loadXml('tests/rss2.xml');
-// $rss->loadXml('tests/norss.txt');
+$sharers = $flowDb->getSharers();
+foreach($sharers as $sharer) {
+    $flow = $feed->loadFeed($sharer->feed);
+    $flowDb->addElements($sharer->id, $flow);
+}
 
 echo '<pre>';
-var_dump($result);
+//var_dump($flow);
 echo '</pre>';
