@@ -1,12 +1,5 @@
 <?php
-$config = array (
-    'dbHost' => 'localhost',
-    'dbName' => 'shaarwaall',
-    'dbUser' => 'root',
-    'dbPass' => 'm&t@ll1k',
-    'tblPrefix' => '',
-);
-
+require_once 'config.php';
 require_once 'libs/feedParser.php';
 require_once 'libs/mysql.php';
 require_once 'libs/flowdb.php';
