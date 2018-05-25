@@ -38,6 +38,8 @@ class flowDb
                                 $tStmt->execute();
                                 $tags .= $elements['term'] . ' ';
                             }
+                            $tStmt->closeCursor();
+                            $tStmt = NULL;
                         }
                         $origin    = $this->linkNotExists($entry->link['href']);
                         $permalink = substr($entry->id, -6);
@@ -81,7 +83,6 @@ class flowDb
             $result = $stmt->fetchAll(PDO::FETCH_OBJ);
             $stmt->closeCursor();
             $stmt = NULL;
-            var_dump($result);
             if (count($result) === 0) {
                 $return = $hash;
             }
