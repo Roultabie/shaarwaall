@@ -22,6 +22,7 @@ class dbConnexion
     {
         try {
             self::$instance = new PDO('mysql:host=' . self::$dbHost . ';dbname=' . self::$dbName, self::$dbUser, self::$dbPass);
+            self::$instance->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             self::$instance->query("SET NAMES 'utf8'");
         } catch (Exception $e) {
             print "Erreur !: " . $e->getMessage() . "<br/>";

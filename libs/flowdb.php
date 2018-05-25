@@ -8,98 +8,88 @@ class flowDb
      */
     public function addElements($id, $obj) // array = links to add (array key[] = array key = fields, value = values)
     {
-        $elements = $this->objectToArray($obj);
-        if (is_array($elements)) {
-            foreach ($elements as $datas) {
-                // Insert or update tag table if tag exist
-                if (!empty($datas['tags'])) {
-                    if (is_array($tags)) {
-                        foreach ($tags as $value) {
-                            $tQuery = "INSERT INTO " . self::$tblPrefix . "tags(tag)
-                                        VALUES (:tag)
-                                        ON DUPLICATE KEY UPDATE hits = hits+1;";
-                            $tStmt = dbConnexion::getInstance()->prepare($tQuery);
-                            $tStmt->bindValue(':tag', trim($value), PDO::PARAM_STR);
-                            $tStmt->execute();
-                        }
-                    }
-                }
-                $stmt = dbConnexion::getInstance()->prepare('INSERT INTO flow
-                    (sharer, link_hash, link, title, content, tags, permalink, published, updated, first_share)
-                    VALUES (:sharer, :link_hash, :link, :title, :content, :tags, :permalink,  :published, :updated :first_share);');
-                $stmt->bindValue(':sharer', $id, PDO::PARAM_INT);
-                if (empty($datas['link_hash'])) {
-                    $stmt->bindValue(':link_hash', '', PDO::PARAM_NULL);
-                }
-                else {
-                    $stmt->bindValue(':link_hash', $datas['link_hash'], PDO::PARAM_STR);
-                }
-                $stmt->bindValue(':link', $datas['link'], PDO::PARAM_STR);
-                $stmt->bindValue(':title', $datas['title'], PDO::PARAM_STR);
-                $stmt->bindValue(':content', $datas['content'], PDO::PARAM_STR);
-                $stmt->bindValue(':tags', $datas['tags'], PDO::PARAM_STR);
-                $stmt->bindValue(':permalink', $datas['permalink'], PDO::PARAM_STR);
-                $stmt->bindValue(':published', $published, PDO::PARAM_STR);
-                $stmt->bindValue(':updated', $updated, PDO::PARAM_STR);
-                $stmt->bindValue(':first_share', $firstShare, PDO::PARAM_STR);
-                $stmt->execute();
-            }
-        }
-    }
-
-    private function objectToArray($obj)
-    {
         if (is_object($obj)) {
             if (count($obj) > 0) {
-                $sharer['title'] = $obj->title;
-                $sharer['subtitle'] = $obj->subtitle;
-                $sharer['updated'] = $obj->updated;
-                $sharer['feed'] = $obj->feed;
-                $sharer['author'] = $obj->author;
-                $sharer['uri'] = $obj->id;
                 if (count($obj->entry) > 0) {
+                    $query     = 'INSERT INTO flow (sharer, link_hash, link, title, content, tags, permalink, published, updated, first_share, id)
+                        VALUES (:sharer, :link_hash, :link, :title, :content, :tags, :permalink,  :published, :updated, :first_share, :id);';
+                    $stmt = dbConnexion::getInstance()->prepare($query);
+                    $stmt->bindParam(':sharer', $sharer, PDO::PARAM_INT);
+                    $stmt->bindParam(':link_hash', $link_hash, PDO::PARAM_STR);
+                    $stmt->bindParam(':link', $link, PDO::PARAM_STR);
+                    $stmt->bindParam(':title', $title, PDO::PARAM_STR);
+                    $stmt->bindParam(':content', $content, PDO::PARAM_STR);
+                    $stmt->bindParam(':tags', $taglist, PDO::PARAM_STR);
+                    $stmt->bindParam(':permalink', $permalink, PDO::PARAM_STR);
+                    $stmt->bindParam(':published', $published, PDO::PARAM_STR);
+                    $stmt->bindParam(':updated', $updated, PDO::PARAM_STR);
+                    $stmt->bindParam(':first_share', $firstShare, PDO::PARAM_STR);
+                    $stmt->bindParam(':id', $smallHash, PDO::PARAM_STR);
+
                     foreach($obj->entry as $entry) {
-                        if (count($entry->category) > 0) {
+                        if (count($entry->category) > 0) { // Insert or update tag table if tag exist
+                            $tag = '';
                             foreach($entry->category as $elements) {
-                                $tags = $elements['term'];
+                                $tQuery = "INSERT INTO tags(tag)
+                                            VALUES (:tag)
+                                            ON DUPLICATE KEY UPDATE hits = hits+1;";
+                                $tStmt = dbConnexion::getInstance()->prepare($tQuery);
+                                $tStmt->bindValue(':tag', trim($elements['term']), PDO::PARAM_STR);
+                                $tStmt->execute();
+                                $tags .= $elements['term'];
                             }
                         }
-                        $link      = $entry->{'@attributes'}->href;
-                        $link_hash = $this->linkNotExists($link);
+                        $origin    = $this->linkNotExists($entry->link['href']);
                         $permalink = substr($entry->id, -6);
                         $published = substr($entry->published, 0, -6);
                         $updated   = substr($entry->updated, 0, -6);
-                        $sharer['datas'][] = ['title'     => $entry->title,
-                                              'link'      => $link,
-                                              'permalink' => $permalink,
-                                              'published' => $published,
-                                              'updated'   => $updated,
-                                              'content'   => $entry->content,
-                                              'tags'      => $tags,];
+                        if (is_int($origin)) {
+                            $link_hash  = NULL;
+                            $firstShare = $origin;
+                        }
+                        else {
+                            $link_hash  = $origin;
+                            $firstShare = '';
+                        }
+                        $sharer    = $id;
+                        $link      = $entry->link['href'];
+                        $title     = $entry->title;
+                        $content   = $entry->content;
+                        $taglist   = $tags;
+                        $permalink = substr($entry->id, -6);
+                        $published = substr($entry->published, 0, -6);
+                        $updated   = substr($entry->updated, 0, -6);
+                        $smallHash = $this->smallHash(rand() . $permalink);
+                        $stmt->execute();
                     }
+                    $stmt->closeCursor();
+                    $stmt = NULL;
                 }
             }
         }
-        return $sharer;
     }
 
     private function linkNotExists($uri)
     {
-        $exists = '';
+        $return = '';
         if (!empty($uri)) {
-            $hash = md5sums($uri);
-            $query = 'SELECT link_hash FROM flow WHERE link_hash = :hash ORDER BY published ASC LIMIT 1;';
+            $hash = md5($uri);
+            $query = 'SELECT sharer FROM flow WHERE link_hash = :hash ORDER BY published ASC LIMIT 1;';
             $stmt  = dbConnexion::getInstance()->prepare($query);
+            $stmt->bindValue(':hash', $hash, PDO::PARAM_STR);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_OBJ);
             $stmt->closeCursor();
             $stmt = NULL;
-            //var_dump($query);
-            if (!is_object($result)) {
-                $exists = $hash;
+            var_dump($result);
+            if (!is_array($result)) {
+                $return = $hash;
+            }
+            else {
+                $return = (string)$result->sharer;
             }
         }
-        return $exists;
+        return $return;
     }
 
     public function getSharers()
@@ -111,5 +101,19 @@ class flowDb
         $stmt->closeCursor();
         $stmt = NULL;
         return $result;
+    }
+
+    /**
+     * SmallHash via shaarli (sebsauvage)
+     * @param  string $string [description]
+     * @return string $hash   [description]
+     */
+    private function smallHash($string)
+    {
+        $hash = rtrim(base64_encode(hash('crc32', $string, TRUE)), '=');
+        $hash = str_replace('+', '-', $hash); // Get rid of characters which need encoding in URLs.
+        $hash = str_replace('/', '_', $hash);
+        $hash = str_replace('=', '@', $hash);
+        return $hash;
     }
 }
