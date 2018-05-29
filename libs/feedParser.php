@@ -28,10 +28,10 @@ class feedParser
     * @access public
     * @since  Method available since start of project
     */
-    public function loadFeed($uri)
+    public static function loadFeed($uri)
     {
         $object = '';
-        if ($this->isvalid($uri)) {
+        if (self::isvalid($uri)) {
             $object = simplexml_load_file($uri, 'SimpleXMLElement', LIBXML_NOCDATA);
         }
         return $object;
@@ -47,7 +47,7 @@ class feedParser
     * @access private
     * @since Method available since start of project
     */
-    private function isValid($uri)
+    private static function isValid($uri)
     {
         $result = false;
         if (!empty($uri)) {
@@ -66,5 +66,32 @@ class feedParser
             }
         }
         return $result;
+    }
+
+    public static function isShaarli($uri)
+    {
+        if (!empty($uri)) {
+            $feed = setFeedUrl($uri, 1);
+            $obj  = $self::loadFeed($uri);
+            if ($obj->generator === "Shaarli") { // TODO: old shaarli do not have generator tag
+                $result = true;
+            }
+            else {
+                $result = false;
+            }
+            $result = false;
+        }
+        return $result
+    }
+
+    public static function setFeedUrl($uri, $nb = 0)
+    {
+        $feedOptions = [
+            'do' => 'atom',
+            'nb' => (int)$nb,
+            ];
+        $uri   = rtrim($uri, '/');
+        $feed  = $_POST['uri'] . '?' . http_build_query($feedOptions);
+        return $feed;
     }
 }
