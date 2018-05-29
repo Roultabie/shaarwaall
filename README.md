@@ -7,7 +7,7 @@
         - [Partage, ergonomie](#partage-ergonomie)
     - [Discussion](#discussion)
         - [Discussion, ergonomie](#discussion-ergonomie)
-    - [Fonctionnalités](#fonctionnalites)
+    - [Fonctionnalités](#fonctionnalités)
 
 ## Ergonomie
 - [] Liste affichés des shaares à la "google+".
