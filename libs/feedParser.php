@@ -28,11 +28,12 @@ class feedParser
     * @access public
     * @since  Method available since start of project
     */
-    public static function loadFeed($uri)
+    public static function loadFeed($uri, $nb = 0)
     {
         $object = '';
-        if (self::isvalid($uri)) {
-            $object = simplexml_load_file($uri, 'SimpleXMLElement', LIBXML_NOCDATA);
+        $feed = self::setFeedUrl($uri, $nb);
+        if (self::isvalid($feed)) {
+            $object = simplexml_load_file($feed, 'SimpleXMLElement', LIBXML_NOCDATA);
         }
         return $object;
     }
