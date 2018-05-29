@@ -81,7 +81,7 @@ class feedParser
             }
             $result = false;
         }
-        return $result
+        return $result;
     }
 
     public static function setFeedUrl($uri, $nb = 0)
