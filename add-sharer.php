@@ -7,13 +7,7 @@ require_once 'libs/flowdb.php';
 if (!empty($_POST['uri'])) {
     $flowDb = new flowDb();
     $feed   = new feedParser();
-    $feedOptions = [
-        'do' => 'atom',
-        'nb' => 1,
-        ];
-    $uri   = rtrim($uri, '/');
-    $path  = $_POST['uri'] . '?' . http_build_query($feedOptions);
-    $flow  = $feed->loadFeed($path);
+    $flow  = $feed->loadFeed($path, 50);
     $flowDb->addSharer($flow);
     var_dump($flow);
 }
