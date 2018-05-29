@@ -6,13 +6,18 @@ class flowDb
      * @param array array('sqlField' => 'fieldContent');
      * @return void
      */
+
+    function __construct()
+    {
+        //$this->causes
+    }
     public function addElements($id, $obj) // array = links to add (array key[] = array key = fields, value = values)
     {
         if (is_object($obj)) {
             if (count($obj) > 0) {
                 if (count($obj->entry) > 0) {
-                    $query     = 'INSERT INTO flow (sharer, link_hash, link, title, content, tags, permalink, published, updated, first_share, id)
-                        VALUES (:sharer, :link_hash, :link, :title, :content, :tags, :permalink,  :published, :updated, :first_share, :id);';
+                    $query = 'INSERT INTO flow (sharer, link_hash, link, title, content, tags, permalink, published, updated, first_share, id)
+                              VALUES (:sharer, :link_hash, :link, :title, :content, :tags, :permalink,  :published, :updated, :first_share, :id);';
                     $stmt = dbConnexion::getInstance()->prepare($query);
                     $stmt->bindParam(':sharer', $sharer, PDO::PARAM_INT);
                     $stmt->bindParam(':link_hash', $link_hash, PDO::PARAM_STR);
@@ -26,11 +31,20 @@ class flowDb
                     $stmt->bindParam(':first_share', $firstShare, PDO::PARAM_STR);
                     $stmt->bindParam(':id', $smallHash, PDO::PARAM_STR);
 
+                    $pQuery = 'INSERT INTO flow_pending (sharer, updated, object, hash)
+                               VALUES (:pSharer, NOW(), :pObject, :pHash)
+                               ON DUPLICATE KEY UPDATE updated = NOW();';
+                    $pStmt = dbConnexion::getInstance()->prepare($pQuery);
+                    $pStmt->bindParam(':pSharer', $pSharer, PDO::PARAM_STR);
+                    $pStmt->bindParam(':pObject', $pObject, PDO::PARAM_STR);
+                    $pStmt->bindParam(':pHash', $pHash, PDO::PARAM_STR);
+                    $pending = false;
+
                     foreach($obj->entry as $entry) {
                         if (count($entry->category) > 0) { // Insert or update tag table if tag exist
                             $tags = '';
                             $tQuery = "INSERT INTO tags(tag)
-                                VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
+                                       VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
                             $tStmt = dbConnexion::getInstance()->prepare($tQuery);
                             $tStmt->bindParam(':tag', $tag, PDO::PARAM_STR);
                             foreach($entry->category as $elements) {
@@ -55,28 +69,28 @@ class flowDb
                         $origin     = $this->ifReShared($entry);
                         if (is_array($origin)) {
                             if ($origin['shared'] === false) {
-                                if ($origin['cause'] === 'new') {
-                                    $result[] = $origin;
-                                    echo '<font color="red"><bold>ICI</bold></font>';
-                                }
+                                $pSharer = $id;
+                                $pObject = json_encode($entry);
+                                $pHash   = md5($pObject);
+                                $pending = true;
+                                $pStmt->execute();
                             }
                             else {
                                 $firstShare = $origin['shared'];
-                                //$stmt->execute();
-                                $result[] = true;
+                                $stmt->execute();
                             }
                         }
                         else {
-                            //$stmt->execute();
-                            $result[] = true;
+                            $stmt->execute();
                         }
                     }
                     $stmt->closeCursor();
+                    $pStmt->closeCursor();
                     $stmt = NULL;
                 }
             }
         }
-        return $result;
+        return $pending;
     }
 
     private function linkNotExists($uri)
@@ -159,14 +173,13 @@ class flowDb
             preg_match($pattern, $text, $matches);
             if (count($matches) > 0) {
                 $elements = parse_url($matches['href']);
-
                 array_pop($elements);
                 $shaarli = array_shift($elements) . '://' . implode($elements);
                 if ($this->searchSharer($shaarli, true)) {
-                echo 'toto';
-                    $result['cause'] = 'exists';
+                echo $shaarli;
                     $shared = $this->linkNotExists($obj->link['href']);
                     if ($shared === false) {
+                        $result['cause']  = 'source_not_in_database';
                         $result['shared'] = false;
                     }
                     else {
@@ -175,7 +188,8 @@ class flowDb
                 }
                 else {
                     if (feedParser::isShaarli($shaarli)) {
-                        $result['cause']  = 'new';
+                        $this->addSharer(feedParser::loadFeed($shaarli, 1));
+                        $result['cause']  = 'new_source';
                         $result['shared'] = false;
                         echo "<pre>";
                         //var_dump($shaarli);
@@ -196,11 +210,13 @@ class flowDb
     private function searchSharer($uri, $boolResult = false)
     {
         if ($boolResult === true) {
-            $query = 'SELECT COUNT(id) AS nb FROM sharers WHERE uri = :uri LIMIT 1;';
+            $query = 'SELECT COUNT(id) AS nb FROM sharers WHERE uri LIKE :uri LIMIT 1;';
             $stmt = dbConnexion::getInstance()->prepare($query);
-            $stmt->bindValue(':uri', $uri, PDO::PARAM_STR);
+            $stmt->bindValue(':uri', $uri .'%', PDO::PARAM_STR);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_OBJ);
+            echo '<pre>' . $uri .PHP_EOL;
+            var_dump($result);
             if ($result[0]->nb === '0') {
                 $return = false;
             }
