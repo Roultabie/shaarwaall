@@ -41,22 +41,26 @@ class flowDb
                             $tStmt->closeCursor();
                             $tStmt = NULL;
                         }
-                        $origin    = $this->linkNotExists($entry->link['href']);
-                        $permalink = substr($entry->id, -6);
-                        $published = substr($entry->published, 0, -6);
-                        $updated   = substr($entry->updated, 0, -6);
-                        $sharer    = $id;
-                        $link_hash = is_int($origin) ? NULL : $origin;
-                        $link      = $entry->link['href'];
-                        $title     = $entry->title;
-                        $content   = $entry->content;
-                        $taglist   = isset($tags) ? $tags : '';
-                        $permalink = substr($entry->id, -6);
-                        $published = substr($entry->published, 0, -6);
-                        $updated   = substr($entry->updated, 0, -6);
-                        $firstShare = is_int($origin) ? $origin : '';
-                        $smallHash = $this->smallHash(rand() . $permalink);
-                        $stmt->execute();
+                        $origin    = $this->ifReShared($entry);
+                        if (is_array($origin)) {
+                            if ($origin['shared'] === false) {
+                                #pending code;
+                            }
+                            else {
+                                $sharer     = $id;
+                                $link_hash  = md5($entry->link['href']);
+                                $link       = $entry->link['href'];
+                                $title      = $entry->title;
+                                $content    = $entry->content;
+                                $taglist    = isset($tags) ? $tags : '';
+                                $permalink  = self:urlToPermalink($entry->id);
+                                $published  = self:dateAtomtoSQL($entry->published);
+                                $updated    = self:dateAtomtoSQL($entry->updated);
+                                $firstShare = is_int($origin) ? $origin : '';
+                                $smallHash  = $this->smallHash(rand() . $permalink);
+                                $stmt->execute();
+                            }
+                        }
                     }
                     $stmt->closeCursor();
                     $stmt = NULL;
@@ -78,7 +82,7 @@ class flowDb
             $stmt->closeCursor();
             $stmt = NULL;
             if (count($result) === 0) {
-                $return = $hash;
+                $return = false;
             }
             else {
                 $return = (int)$result[0]->sharer;
@@ -135,5 +139,67 @@ class flowDb
             $stmt->closeCursor();
             $stmt = NULL;
         }
+    }
+
+    private function ifReShared($obj)
+    {
+        if (is_object($obj)) {
+            $elements = parse_url($obj->link['href']);
+            $query    = array_pop($obj->link['href']);
+            $shaarli  = implode($elements);
+            if (count($query) === 6)) {
+                if ($this->searchSharer($shaarli)) {
+                    $result['cause'] = 'exists';
+                    $shared = $this->linkNotExists($obj->link['href']);
+                    if ($shared === false) {
+                        $result['shared'] = false;
+                    }
+                    else {
+                        $result['shared'] = true;
+                    }
+                }
+                else {
+                    if (feedParser::isShaarli()) {
+                        $result['cause'] = 'new';
+                        $result['shared']  = false;
+                    }
+                    else {
+                        $result = false;
+                    }
+                }
+            }
+            else {
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
+    private function searchSharer($uri, $boolResult = false)
+    {
+        if ($boolResult === true) {
+            $query = 'SELECT id FROM sharers WHERE uri = :uri LIMIT 1;';
+            $stmt = dbConnexion::getInstance()->prepare($query);
+            $stmt->bindValue(':uri', $uri, PDO::PARAM_STR);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_OBJ);
+            if (count($result)) === 0) {
+                $return = false;
+            }
+            else {
+                $result = true;
+            }
+        }
+        return $result;
+    }
+
+    private static function urlToPermalink($url)
+    {
+        return substr($url, -6);
+    }
+
+    private static function dateAtomtoSQL($date)
+    {
+        return substr($date, 0, -6);
     }
 }
