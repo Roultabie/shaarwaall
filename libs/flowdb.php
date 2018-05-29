@@ -27,9 +27,6 @@ class flowDb
                     $stmt->bindParam(':id', $smallHash, PDO::PARAM_STR);
 
                     foreach($obj->entry as $entry) {
-                    //unset($sharer, $link_hash, $link, $title, $content,
-                    //      $permalink, $published, $updated, $firstShare,
-                    //      $smallHash, $origin);
                         if (count($entry->category) > 0) { // Insert or update tag table if tag exist
                             $tags = '';
                             $tQuery = "INSERT INTO tags(tag)
