@@ -27,6 +27,9 @@ class flowDb
                     $stmt->bindParam(':id', $smallHash, PDO::PARAM_STR);
 
                     foreach($obj->entry as $entry) {
+                    //unset($sharer, $link_hash, $link, $title, $content,
+                    //      $permalink, $published, $updated, $firstShare,
+                    //      $smallHash, $origin);
                         if (count($entry->category) > 0) { // Insert or update tag table if tag exist
                             $tags = '';
                             $tQuery = "INSERT INTO tags(tag)
@@ -41,25 +44,30 @@ class flowDb
                             $tStmt->closeCursor();
                             $tStmt = NULL;
                         }
-                        $origin    = $this->ifReShared($entry);
+                        $sharer     = $id;
+                        $link_hash  = md5($entry->link['href']);
+                        $link       = $entry->link['href'];
+                        $title      = $entry->title;
+                        $content    = $entry->content;
+                        $taglist    = isset($tags) ? $tags : '';
+                        $permalink  = self::urlToPermalink($entry->id);
+                        $published  = self::dateAtomtoSQL($entry->published);
+                        $updated    = self::dateAtomtoSQL($entry->updated);
+                        $firstShare = '';
+                        $smallHash  = $this->smallHash(rand() . $permalink);
+                        $origin     = $this->ifReShared($entry);
                         if (is_array($origin)) {
                             if ($origin['shared'] === false) {
                                 #pending code;
                             }
                             else {
-                                $sharer     = $id;
-                                $link_hash  = md5($entry->link['href']);
-                                $link       = $entry->link['href'];
-                                $title      = $entry->title;
-                                $content    = $entry->content;
-                                $taglist    = isset($tags) ? $tags : '';
-                                $permalink  = self:urlToPermalink($entry->id);
-                                $published  = self:dateAtomtoSQL($entry->published);
-                                $updated    = self:dateAtomtoSQL($entry->updated);
-                                $firstShare = is_int($origin) ? $origin : '';
-                                $smallHash  = $this->smallHash(rand() . $permalink);
+
+                                $firstShare = $origin['shared'];
                                 $stmt->execute();
                             }
+                        }
+                        else {
+                            $stmt->execute();
                         }
                     }
                     $stmt->closeCursor();
@@ -144,28 +152,36 @@ class flowDb
     private function ifReShared($obj)
     {
         if (is_object($obj)) {
-            $elements = parse_url($obj->link['href']);
-            $query    = array_pop($obj->link['href']);
-            $shaarli  = implode($elements);
-            if (count($query) === 6)) {
-                if ($this->searchSharer($shaarli)) {
-                    $result['cause'] = 'exists';
-                    $shared = $this->linkNotExists($obj->link['href']);
-                    if ($shared === false) {
-                        $result['shared'] = false;
+            $pattern = '/via([\s:]*)?<a href="(?P<href>(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?)">/i';
+            $text    = $obj->content;
+            preg_match($pattern, $text, $matches);
+            if (count($matches) > 0) {
+                $elements = parse_url(matches['href']);
+                $query    = array_pop($obj->link['href']);
+                $shaarli  = implode($elements);
+                if (count($query) === 6) {
+                    if ($this->searchSharer($shaarli)) {
+                        $result['cause'] = 'exists';
+                        $shared = $this->linkNotExists($obj->link['href']);
+                        if ($shared === false) {
+                            $result['shared'] = false;
+                        }
+                        else {
+                            $result['shared'] = $shared;
+                        }
                     }
                     else {
-                        $result['shared'] = true;
+                        if (feedParser::isShaarli()) {
+                            $result['cause'] = 'new';
+                            $result['shared']  = false;
+                        }
+                        else {
+                            $result = false;
+                        }
                     }
                 }
                 else {
-                    if (feedParser::isShaarli()) {
-                        $result['cause'] = 'new';
-                        $result['shared']  = false;
-                    }
-                    else {
-                        $result = false;
-                    }
+                    $result = false;
                 }
             }
             else {
@@ -183,7 +199,7 @@ class flowDb
             $stmt->bindValue(':uri', $uri, PDO::PARAM_STR);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-            if (count($result)) === 0) {
+            if (count($result) === 0) {
                 $return = false;
             }
             else {
