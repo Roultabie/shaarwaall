@@ -13,13 +13,14 @@
 - [] Liste affichés des shaares à la "google+".
 
 ## Partage
-- [] Ne pas reprendre le shaare original, 
+- [x] Ne pas reprendre le shaare original, 
 - [] afficher à côté un numéro dans une icône avec le nombre de shaares total,
-- [] si indiqué via *** et que c'est via un shaarli, alors aller chercher dans la bdd le shaare pointé et le mettre en source,
+- [.] si indiqué via *** et que c'est via un shaarli, alors aller chercher dans la bdd le shaare pointé et le mettre en source,
+- [.] vérifier l'existance du shaarli source du "via" dans la liste, si il n'existe pas, le rajouter,
 - [] si un shaare "via" est repointé, alors on partage avec la source d'origine même si indiqué "via" un autre.
 
 ### Partage, ergonomie
-- [] Quand on cique sur l'icône du nombre de partages, le post tourne (flip?) et l'on a accès à différents partages par date ASC.
+- [] Quand on clique sur l'icône du nombre de partages, le post tourne (flip?) et l'on a accès à différents partages par date ASC.
 
 ## Discussion
 - [] Mettre les shaares de réponse en dessous du shaare original,
