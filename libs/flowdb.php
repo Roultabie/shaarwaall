@@ -35,7 +35,7 @@ class flowDb
                             $tStmt->bindParam(':tag', $tag, PDO::PARAM_STR);
                             foreach($entry->category as $elements) {
                                 $tag = trim($elements['term']);
-                                $tStmt->execute();
+                                //$tStmt->execute();
                                 $tags .= $elements['term'] . ' ';
                             }
                             $tStmt->closeCursor();
@@ -55,16 +55,20 @@ class flowDb
                         $origin     = $this->ifReShared($entry);
                         if (is_array($origin)) {
                             if ($origin['shared'] === false) {
-                                #pending code;
+                                if ($origin['cause'] === 'new') {
+                                    $result[] = $origin;
+                                    echo '<font color="red"><bold>ICI</bold></font>';
+                                }
                             }
                             else {
-
                                 $firstShare = $origin['shared'];
-                                $stmt->execute();
+                                //$stmt->execute();
+                                $result[] = true;
                             }
                         }
                         else {
-                            $stmt->execute();
+                            //$stmt->execute();
+                            $result[] = true;
                         }
                     }
                     $stmt->closeCursor();
@@ -72,6 +76,7 @@ class flowDb
                 }
             }
         }
+        return $result;
     }
 
     private function linkNotExists($uri)
@@ -153,32 +158,32 @@ class flowDb
             $text    = $obj->content;
             preg_match($pattern, $text, $matches);
             if (count($matches) > 0) {
-                $elements = parse_url(matches['href']);
-                $query    = array_pop($obj->link['href']);
-                $shaarli  = implode($elements);
-                if (count($query) === 6) {
-                    if ($this->searchSharer($shaarli)) {
-                        $result['cause'] = 'exists';
-                        $shared = $this->linkNotExists($obj->link['href']);
-                        if ($shared === false) {
-                            $result['shared'] = false;
-                        }
-                        else {
-                            $result['shared'] = $shared;
-                        }
+                $elements = parse_url($matches['href']);
+
+                array_pop($elements);
+                $shaarli = array_shift($elements) . '://' . implode($elements);
+                if ($this->searchSharer($shaarli, true)) {
+                echo 'toto';
+                    $result['cause'] = 'exists';
+                    $shared = $this->linkNotExists($obj->link['href']);
+                    if ($shared === false) {
+                        $result['shared'] = false;
                     }
                     else {
-                        if (feedParser::isShaarli()) {
-                            $result['cause'] = 'new';
-                            $result['shared']  = false;
-                        }
-                        else {
-                            $result = false;
-                        }
+                        $result['shared'] = $shared;
                     }
                 }
                 else {
-                    $result = false;
+                    if (feedParser::isShaarli($shaarli)) {
+                        $result['cause']  = 'new';
+                        $result['shared'] = false;
+                        echo "<pre>";
+                        //var_dump($shaarli);
+                        echo "</pre>";
+                    }
+                    else {
+                        $result = false;
+                    }
                 }
             }
             else {
@@ -191,19 +196,19 @@ class flowDb
     private function searchSharer($uri, $boolResult = false)
     {
         if ($boolResult === true) {
-            $query = 'SELECT id FROM sharers WHERE uri = :uri LIMIT 1;';
+            $query = 'SELECT COUNT(id) AS nb FROM sharers WHERE uri = :uri LIMIT 1;';
             $stmt = dbConnexion::getInstance()->prepare($query);
             $stmt->bindValue(':uri', $uri, PDO::PARAM_STR);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-            if (count($result) === 0) {
+            if ($result[0]->nb === '0') {
                 $return = false;
             }
             else {
-                $result = true;
+                $return = true;
             }
         }
-        return $result;
+        return $return;
     }
 
     private static function urlToPermalink($url)

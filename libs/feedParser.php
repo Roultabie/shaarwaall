@@ -71,15 +71,19 @@ class feedParser
     public static function isShaarli($uri)
     {
         if (!empty($uri)) {
-            $feed = setFeedUrl($uri, 1);
-            $obj  = $self::loadFeed($uri);
-            if ($obj->generator === "Shaarli") { // TODO: old shaarli do not have generator tag
-                $result = true;
+            $feed = self::setFeedUrl($uri, 1);
+            $obj  = self::loadFeed($feed);
+            if (is_object($obj)) {
+                if ($obj->generator == "Shaarli") { // TODO: old shaarli do not have generator tag
+                    $result = true;
+                }
+                else {
+                    $result = false;
+                }
             }
             else {
                 $result = false;
             }
-            $result = false;
         }
         return $result;
     }
@@ -91,7 +95,7 @@ class feedParser
             'nb' => (int)$nb,
             ];
         $uri   = rtrim($uri, '/');
-        $feed  = $_POST['uri'] . '?' . http_build_query($feedOptions);
+        $feed  = $uri . '/?' . http_build_query($feedOptions);
         return $feed;
     }
 }
