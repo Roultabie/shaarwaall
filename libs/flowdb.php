@@ -62,8 +62,8 @@ class flowDb
                         $content    = $entry->content;
                         $taglist    = isset($tags) ? $tags : '';
                         $permalink  = self::urlToPermalink($entry->id);
-                        $published  = self::dateAtomtoSQL($entry->published);
-                        $updated    = self::dateAtomtoSQL($entry->updated);
+                        $published  = $entry->published;
+                        $updated    = $entry->updated;
                         $firstShare = '';
                         $smallHash  = $this->smallHash(rand() . $permalink);
                         $origin     = $this->ifReShared($entry);
@@ -232,8 +232,26 @@ class flowDb
         return substr($url, -6);
     }
 
-    private static function dateAtomtoSQL($date)
+    public function getSharerUpdatedFeed($id)
     {
-        return substr($date, 0, -6);
+        $query = 'SELECT updated FROM sharers WHERE id = :id;';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $stmt->closeCursor();
+        $stmt = NULL;
+        return $result[0]->updated;
+    }
+
+    public function setSharerUpdatedFeed($id, $date)
+    {
+        $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindValue(':updated', $date, PDO::PARAM_STR);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $stmt->closeCursor();
+        $stmt = NULL;
     }
 }
