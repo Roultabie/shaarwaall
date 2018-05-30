@@ -8,10 +8,18 @@ CREATE TABLE `flow` (
  `permalink` char(6) COLLATE utf8mb4_unicode_ci NOT NULL,
  `published` datetime NOT NULL,
  `updated` datetime NOT NULL,
- `first_share` char(6) COLLATE utf8mb4_unicode_ci NOT NULL,
- `id` char(6) COLLATE utf8mb4_unicode_ci NOT NULL,
- PRIMARY KEY (`id`),
- UNIQUE KEY `UNIQUE` (`link_hash`(191)) USING BTREE
+ `first_share` char(22) COLLATE utf8mb4_unicode_ci NOT NULL,
+ `id` char(22) COLLATE utf8mb4_unicode_ci NOT NULL,
+ PRIMARY KEY (`id`) USING BTREE,
+ KEY `INDEX` (`link_hash`(191)) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+CREATE TABLE `flow_pending` (
+ `sharer` smallint(6) NOT NULL,
+ `updated` datetime NOT NULL,
+ `datas` text COLLATE utf8mb4_unicode_ci NOT NULL,
+ `id` char(22) COLLATE utf8mb4_unicode_ci NOT NULL,
+ PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 CREATE TABLE `sharers` (
@@ -22,8 +30,10 @@ CREATE TABLE `sharers` (
  `feed` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
  `author` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
  `uri` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
- PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+ PRIMARY KEY (`id`),
+ UNIQUE KEY `uri` (`uri`),
+ KEY `uri_2` (`uri`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 CREATE TABLE `tags` (
  `tag` varchar(255) NOT NULL,
