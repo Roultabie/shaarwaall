@@ -260,21 +260,33 @@ class flowDb
         $stmt = NULL;
     }
 
-    public static function flowToArray($obj, $sort = '')
+    public static function flowToArray($obj, $sort, $order, $minDate = '', $maxDate = '')
     {
+        $curDate = date('Y-m-d H:i:s');
+        $minDate = (empty($minDate)) ? strtotime('1970-01-01 00:00:00') : strtotime($minDate);
+        $maxDate = (empty($maxDate)) ? strtotime($curDate) : strtotime($maxDate);
         foreach($obj as $value) {
-            $key = strtotime(self::filterDate($value->published));
-            $entry[$key] = [
-                'title'     => (string) $value->title,
-                'link'      => (string) $value->link['href'],
-                'permalink' => (string) $value->id,
-                'published' => (string) $value->published,
-                'updated'   => (string) $value->updated,
-                'content'   => (string) $value->content,
-                'tags'      => self::tagsToArray($value->category),
-            ];
+            $published = strtotime(self::filterDate($value->published));
+            $updated   = strtotime(self::filterDate($value->updated));
+            $key = ($sort === 'published') ? $published : $updated;
+            if ($key >= $minDate && $key <=$maxDate) {
+                $entry[$key] = [
+                    'title'     => (string) $value->title,
+                    'link'      => (string) $value->link['href'],
+                    'permalink' => (string) $value->id,
+                    'published' => self::filterDate($value->published),
+                    'updated'   => self::filterDate($value->updated),
+                    'content'   => (string) $value->content,
+                    'tags'      => self::tagsToArray($value->category),
+                ];
+            }
         }
-        if ($sort === 'ASC') ksort($entry);
+        if ($order === 'ASC') {
+            ksort($entry);
+        }
+        else {
+            krsort($entry);
+        }
         return $entry;
     }
 
