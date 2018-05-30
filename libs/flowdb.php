@@ -262,18 +262,10 @@ class flowDb
 
     public static function flowToArray($obj, $sort, $order, $minDate = '', $maxDate = '')
     {
-        $curDate  = date('Y-m-d H:i:s');
-        $minDate  = (empty($minDate)) ? strtotime('1970-01-01 00:00:00') : strtotime($minDate);
-        $maxDate  = (empty($maxDate)) ? strtotime($curDate) : strtotime($maxDate);
-        $datas['sharer'] = [
-            'title'    => (string) $obj->title,
-            'subtitle' => (string) $obj->subtitle,
-            'updated'  => (string) $obj->updated,
-            'feed'     => (string) $obj->link['href'],
-            'author'   => (string) $obj->author->name,
-            'uri'      => (string) $obj->author->uri,
-        ];
-        foreach($obj->entry as $value) {
+        $curDate = date('Y-m-d H:i:s');
+        $minDate = (empty($minDate)) ? strtotime('1970-01-01 00:00:00') : strtotime($minDate);
+        $maxDate = (empty($maxDate)) ? strtotime($curDate) : strtotime($maxDate);
+        foreach($obj as $value) {
             $published = strtotime(self::filterDate($value->published));
             $updated   = strtotime(self::filterDate($value->updated));
             $key = ($sort === 'published') ? $published : $updated;
@@ -295,8 +287,7 @@ class flowDb
         else {
             krsort($entry);
         }
-        $datas['entry'] = $entry;
-        return $datas;
+        return $entry;
     }
 
     private static function tagsToArray($obj)
