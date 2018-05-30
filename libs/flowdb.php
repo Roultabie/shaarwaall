@@ -232,6 +232,11 @@ class flowDb
         return substr($url, -6);
     }
 
+    private static function filterDate($date)
+    {
+        return substr($date, 0, -6);
+    }
+
     public function getSharerUpdatedFeed($id)
     {
         $query = 'SELECT updated FROM sharers WHERE id = :id;';
@@ -253,5 +258,33 @@ class flowDb
         $stmt->execute();
         $stmt->closeCursor();
         $stmt = NULL;
+    }
+
+    public static function flowToArray($obj, $sort = '')
+    {
+        foreach($obj as $value) {
+            $key = strtotime(self::filterDate($value->published));
+            $entry[$key] = [
+                'title'     => (string) $value->title,
+                'link'      => (string) $value->link['href'],
+                'permalink' => (string) $value->id,
+                'published' => (string) $value->published,
+                'updated'   => (string) $value->updated,
+                'content'   => (string) $value->content,
+                'tags'      => self::tagsToArray($value->category),
+            ];
+        }
+        if ($sort === 'ASC') ksort($entry);
+        return $entry;
+    }
+
+    private static function tagsToArray($obj)
+    {
+        foreach($obj as $value) {
+            // var_dump($value);
+            $tags[] = (string) $value['term'];
+            //$tags = 'test';
+        }
+        return $tags;
     }
 }
