@@ -7,7 +7,7 @@ require_once 'libs/flowdb.php';
 if (!empty($_POST['uri'])) {
     $flowDb = new flowDb();
     $feed   = new feedParser();
-    $flow  = $feed->loadFeed($path, 50);
+    $flow  = $feed->loadFeed($path, 1);
     $flowDb->addSharer($flow);
     var_dump($flow);
 }
