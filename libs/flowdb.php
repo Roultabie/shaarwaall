@@ -95,7 +95,6 @@ class flowDb
                         }
                     }
                     if ($deleteFromPending) {
-                        var_dump($deleteFromPending);
                         $dQuery = 'DELETE from flow_pending WHERE id = :dId';
                         $dStmt  = dbConnexion::getInstance()->prepare($dQuery);
                         $dStmt->bindValue(':dId', $deleteFromPending, PDO::PARAM_STR);
@@ -207,10 +206,16 @@ class flowDb
                 }
                 else {
                     if (feedParser::isShaarli($shaarli)) {
-                        $this->addSharer(feedParser::loadFeed($shaarli, 1));
-                        $result['cause']  = 'new_source';
-                        $result['via']    = $matches['href'];
-                        $result['shared'] = false;
+                        $flow = feedParser::loadFeed($shaarli, 1);
+                        if ($flow) {
+                            $this->addSharer($flow);
+                            $result['cause']  = 'new_source';
+                            $result['via']    = $matches['href'];
+                            $result['shared'] = false;
+                        }
+                        else {
+                            $result = false;
+                        }
                     }
                     else {
                         $result = false;
