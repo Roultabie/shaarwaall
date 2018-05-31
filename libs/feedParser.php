@@ -33,9 +33,12 @@ class feedParser
         $object = '';
         $feed = self::setFeedUrl($uri, $nb);
         if (self::isvalid($feed)) {
-            $object = simplexml_load_file($feed, 'SimpleXMLElement', LIBXML_NOCDATA);
+            $result = simplexml_load_file($feed, 'SimpleXMLElement', LIBXML_NOCDATA);
         }
-        return $object;
+        else {
+            $result = false;
+        }
+        return $result;
     }
 
     /**
@@ -53,16 +56,30 @@ class feedParser
         $result = false;
         if (!empty($uri)) {
             if (strpos($uri, 'http') === 0) {
+                if ($GLOBALS['config']['badCertificateAllowed']) {
+                    stream_context_set_default( [
+                        'ssl' => [
+                            'verify_peer' => false,
+                            'verify_peer_name' => false,
+                        ],
+                    ]);
+                }
                 $headers = get_headers($uri, 1);
                 if ($headers && $headers[0] === 'HTTP/1.1 200 OK') {
                     if (strpos($headers['Content-Type'], 'application/atom+xml') === 0) {
                         $result = true;
                     }
                 }
+                else {
+                    $result = false;
+                }
             }
             elseif (file_exists($uri)) {
                 if (mime_content_type($uri) === "text/xml") {
                     $result = true;
+                }
+                else {
+                    $result = false;
                 }
             }
         }
