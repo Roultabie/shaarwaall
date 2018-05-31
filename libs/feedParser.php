@@ -54,7 +54,7 @@ class feedParser
         if (!empty($uri)) {
             if (strpos($uri, 'http') === 0) {
                 $headers = get_headers($uri, 1);
-                if ($headers && $headers[0] != 'HTTP/1.1 404 Not Found') {
+                if ($headers && $headers[0] === 'HTTP/1.1 200 OK') {
                     if (strpos($headers['Content-Type'], 'application/atom+xml') === 0) {
                         $result = true;
                     }
