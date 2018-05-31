@@ -35,12 +35,14 @@ class flowDb
             $stmt->bindParam(':first_share', $firstShare, PDO::PARAM_STR);
             $stmt->bindParam(':id', $footPrint, PDO::PARAM_STR);
 
-            $pQuery = 'INSERT INTO flow_pending (sharer, updated, datas, id)
-                VALUES (:pSharer, NOW(), :pDatas, :pId)
+            $pQuery = 'INSERT INTO flow_pending (sharer, updated, datas, via, id)
+                VALUES (:pSharer, NOW(), :pDatas, :pVia, :pId)
                 ON DUPLICATE KEY UPDATE updated = NOW();';
             $pStmt = dbConnexion::getInstance()->prepare($pQuery);
             $pStmt->bindParam(':pSharer', $pSharer, PDO::PARAM_STR);
             $pStmt->bindParam(':pDatas', $pDatas, PDO::PARAM_STR);
+            $pStmt->bindParam(':pDatas', $pDatas, PDO::PARAM_STR);
+            $pStmt->bindParam(':pVia', $pVia, PDO::PARAM_STR);
             $pStmt->bindParam(':pId', $footPrint, PDO::PARAM_STR);
             $pending = false;
 
@@ -73,6 +75,7 @@ class flowDb
                     if ($origin['shared'] === false) {
                         $pSharer = $id;
                         $pDatas  = serialize($entry);
+                        $pVia    = md5($entry['permalink']);
                         $pending = true;
                         $pStmt->execute();
                     }
@@ -82,7 +85,13 @@ class flowDb
                     }
                 }
                 else {
-                    $stmt->execute();
+                    $result = $stmt->execute();
+                }
+                if ($result) {
+                    $pending = $this->getPendingElements($entry['permalink']);
+                    if ($pending) {
+                        var_dump($pending);
+                    }
                 }
             }
             $stmt->closeCursor();
@@ -96,7 +105,7 @@ class flowDb
     {
         $return = '';
         if (!empty($uri)) {
-            $hash = md5($uri);
+            $hash  = md5($uri);
             $query = 'SELECT sharer FROM flow WHERE link_hash = :hash ORDER BY published ASC LIMIT 1;';
             $stmt  = dbConnexion::getInstance()->prepare($query);
             $stmt->bindValue(':hash', $hash, PDO::PARAM_STR);
@@ -175,7 +184,6 @@ class flowDb
                 array_pop($elements);
                 $shaarli = array_shift($elements) . '://' . implode($elements);
                 if ($this->searchSharer($shaarli, true)) {
-                echo $shaarli;
                     $shared = $this->linkNotExists($entry['link']);
                     if ($shared === false) {
                         $result['cause']  = 'source_not_in_database';
@@ -190,9 +198,6 @@ class flowDb
                         $this->addSharer(feedParser::loadFeed($shaarli, 1));
                         $result['cause']  = 'new_source';
                         $result['shared'] = false;
-                        echo "<pre>";
-                        //var_dump($shaarli);
-                        echo "</pre>";
                     }
                     else {
                         $result = false;
@@ -214,8 +219,6 @@ class flowDb
             $stmt->bindValue(':uri', $uri .'%', PDO::PARAM_STR);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-            echo '<pre>' . $uri .PHP_EOL;
-            var_dump($result);
             if ($result[0]->nb === '0') {
                 $return = false;
             }
@@ -292,10 +295,32 @@ class flowDb
     private static function tagsToArray($obj)
     {
         foreach($obj as $value) {
-            // var_dump($value);
             $tags[] = (string) $value['term'];
-            //$tags = 'test';
         }
         return $tags;
+    }
+
+    private function getPendingElements($uri)
+    {
+        $hash  = md5($uri);
+        $query = 'SELECT sharer, datas, id FROM flow_pending WHERE via = :via;';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindValue(':via', $hash, PDO::PARAM_STR);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+        $stmt = NULL;
+        if (is_array($result)) {
+            foreach ($result as $key => $value) {
+                $pending['sharer'] = $value['sharer'];
+                $pending['datas']  = unserialize($value['datas']);
+                $pending['id']     = $value['id'];
+            }
+            $return = $pending;
+        }
+        else {
+            $return = false;
+        }
+        return $return;
     }
 }
