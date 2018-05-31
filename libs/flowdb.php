@@ -81,7 +81,7 @@ class flowDb
                     }
                     else {
                         $firstShare = $origin['shared'];
-                        $stmt->execute();
+                        $result = $stmt->execute();
                     }
                 }
                 else {
@@ -99,6 +99,7 @@ class flowDb
                         $dQuery = 'DELETE from flow_pending WHERE id = :dId';
                         $dStmt  = dbConnexion::getInstance()->prepare($dQuery);
                         $dStmt->bindValue(':dId', $deleteFromPending, PDO::PARAM_STR);
+                        $dStmt->execute();
                         $dStmt->closeCursor();
                         $dStmt = NULL;
                     }
@@ -324,7 +325,6 @@ class flowDb
         $stmt = NULL;
         if (is_array($result) && count($result) > 0) {
             foreach ($result as $value) {
-                var_dump($value['datas']);
                 $datas = unserialize($value['datas']);
                 $key   = strtotime($datas['updated']);
                 $pending['sharer'] = $value['sharer'];
