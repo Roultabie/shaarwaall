@@ -15,9 +15,9 @@
 ## Partage
 - [x] Ne pas reprendre le shaare original, 
 - [ ] afficher à côté un numéro dans une icône avec le nombre de shaares total,
-- [.] si indiqué via *** et que c'est via un shaarli, alors aller chercher dans la bdd le shaare pointé et le mettre en source,
-- [.] vérifier l'existance du shaarli source du "via" dans la liste, si il n'existe pas, le rajouter,
-- [ ] si un shaare "via" est repointé, alors on partage avec la source d'origine même si indiqué "via" un autre.
+- [x] si indiqué via *** et que c'est via un shaarli, alors aller chercher dans la bdd le shaare pointé et le mettre en source,
+- [x] vérifier l'existance du shaarli source du "via" dans la liste, si il n'existe pas, le rajouter,
+- [ ] si un shaare "via" est repointé, alors on partage avec la source d'origine même si indiqué "via" un autre
 
 ### Partage, ergonomie
 - [ ] Quand on clique sur l'icône du nombre de partages, le post tourne (flip?) et l'on a accès à différents partages par date ASC.
@@ -32,4 +32,8 @@
 ## Fonctionnalités
 - [ ] Possibilité de créer des "collections": posts regroupés par tag,
 - [ ] dans le menu on a une liste des collections que l'on a créé et si on clique dessus, ça affiche les shaares qui ont le ou les tags concernés,
-- [ ] possibilité d'une sugestion de collections
+- [ ] possibilité d'une sugestion de collections,
+
+## Système
+- [ ] ajouter un contrôle de la date de mise à jour du flux avec la date de mise à jour de chaque entrée, ne mettre à jour que si changement,
+- [ ] actuellement le crowl et la bdd différencient http et https pour un même site, à corriger.
