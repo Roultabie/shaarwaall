@@ -11,7 +11,7 @@ class flowDb
     {
         //$this->causes
     }
-    public function addElements($sharerObject, $lastUpdated, $datas, $deleteFromPending = false) // array = links to add (array key[] = array key = fields, value = values)
+    public function addElements($sharerObject, $datas, $deleteFromPending = false) // array = links to add (array key[] = array key = fields, value = values)
     {
         if (is_array($datas)) {
             $query = 'INSERT INTO flow (
@@ -47,7 +47,9 @@ class flowDb
             $pending = false;
 
             foreach($datas as $entry) {
-                if ($entry['updated'] >= $sharerObject->updated) {
+                if ($entry['updated'] >= $sharerObject->last_update || $deleteFromPending) {
+                    var_dump($sharerObject->id);
+                    var_dump($sharerObject->last_update);
                     if (is_array($entry['tags'])) { // Insert or update tag table if tag exist
                         $tQuery = "INSERT INTO tags(tag)
                             VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
@@ -106,7 +108,7 @@ class flowDb
                     }
                 }
             }
-            $this->setSharerUpdatedFeed($sharerObject->id, strtotime(self::filterDate($lastUpdated)));
+            if (!empty($updated) && !$deleteFromPending) $this->setSharerLastUpdate($sharerObject->id, $updated);
             $stmt->closeCursor();
             $pStmt->closeCursor();
             $stmt = $pStmt = NULL;
@@ -138,7 +140,7 @@ class flowDb
 
     public function getSharers()
     {
-        $query = 'SELECT id, title, updated, feed, uri FROM sharers;';
+        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers;';
         $stmt  = dbConnexion::getInstance()->prepare($query);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -276,6 +278,18 @@ class flowDb
     public function setSharerUpdatedFeed($id, $time)
     {
         $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindValue(':updated', $time, PDO::PARAM_STR);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $stmt->closeCursor();
+        $stmt = NULL;
+    }
+
+    public function setSharerLastUpdate($id, $time)
+    {
+        var_dump($time);
+        $query = 'UPDATE sharers SET last_update = :updated WHERE id = :id';
         $stmt  = dbConnexion::getInstance()->prepare($query);
         $stmt->bindValue(':updated', $time, PDO::PARAM_STR);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
