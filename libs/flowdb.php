@@ -95,6 +95,7 @@ class flowDb
                         }
                     }
                     if ($deleteFromPending) {
+                        var_dump($deleteFromPending);
                         $dQuery = 'DELETE from flow_pending WHERE id = :dId';
                         $dStmt  = dbConnexion::getInstance()->prepare($dQuery);
                         $dStmt->bindValue(':dId', $deleteFromPending, PDO::PARAM_STR);
@@ -323,11 +324,13 @@ class flowDb
         $stmt = NULL;
         if (is_array($result) && count($result) > 0) {
             foreach ($result as $value) {
-                $key           = strtotime($value['datas']['updated']);
+                var_dump($value['datas']);
+                $datas = unserialize($value['datas']);
+                $key   = strtotime($datas['updated']);
                 $pending['sharer'] = $value['sharer'];
                 $pending['id']     = $value['id'];
                 $pending['datas']  = [
-                    $key  => unserialize($value['datas']),
+                    $key  => $datas,
                 ];
             }
             $return[] = $pending;
