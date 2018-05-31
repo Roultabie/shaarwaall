@@ -11,7 +11,7 @@ class flowDb
     {
         //$this->causes
     }
-    public function addElements($id, $datas) // array = links to add (array key[] = array key = fields, value = values)
+    public function addElements($id, $datas, $deleteFromPending = false) // array = links to add (array key[] = array key = fields, value = values)
     {
         if (is_array($datas)) {
             $query = 'INSERT INTO flow (
@@ -75,7 +75,7 @@ class flowDb
                     if ($origin['shared'] === false) {
                         $pSharer = $id;
                         $pDatas  = serialize($entry);
-                        $pVia    = md5($entry['permalink']);
+                        $pVia    = md5($origin['via']);
                         $pending = true;
                         $pStmt->execute();
                     }
@@ -88,9 +88,18 @@ class flowDb
                     $result = $stmt->execute();
                 }
                 if ($result) {
-                    $pending = $this->getPendingElements($entry['permalink']);
-                    if ($pending) {
-                        var_dump($pending);
+                    $flowPending = $this->getPendingElements($entry['permalink']);
+                    if (is_array($flowPending)) {
+                        foreach($flowPending as $row) {
+                            $this->addElements($row['sharer'], $row['datas'], $row['id']);
+                        }
+                    }
+                    if ($deleteFromPending) {
+                        $dQuery = 'DELETE from flow_pending WHERE id = :dId';
+                        $dStmt  = dbConnexion::getInstance()->prepare($dQuery);
+                        $dStmt->bindValue(':dId', $deleteFromPending, PDO::PARAM_STR);
+                        $dStmt->closeCursor();
+                        $dStmt = NULL;
                     }
                 }
             }
@@ -187,6 +196,7 @@ class flowDb
                     $shared = $this->linkNotExists($entry['link']);
                     if ($shared === false) {
                         $result['cause']  = 'source_not_in_database';
+                        $result['via']    = $matches['href'];
                         $result['shared'] = false;
                     }
                     else {
@@ -197,6 +207,7 @@ class flowDb
                     if (feedParser::isShaarli($shaarli)) {
                         $this->addSharer(feedParser::loadFeed($shaarli, 1));
                         $result['cause']  = 'new_source';
+                        $result['via']    = $matches['href'];
                         $result['shared'] = false;
                     }
                     else {
@@ -310,13 +321,16 @@ class flowDb
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $stmt->closeCursor();
         $stmt = NULL;
-        if (is_array($result)) {
-            foreach ($result as $key => $value) {
+        if (is_array($result) && count($result) > 0) {
+            foreach ($result as $value) {
+                $key           = strtotime($value['datas']['updated']);
                 $pending['sharer'] = $value['sharer'];
-                $pending['datas']  = unserialize($value['datas']);
                 $pending['id']     = $value['id'];
+                $pending['datas']  = [
+                    $key  => unserialize($value['datas']),
+                ];
             }
-            $return = $pending;
+            $return[] = $pending;
         }
         else {
             $return = false;
