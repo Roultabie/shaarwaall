@@ -33,7 +33,7 @@ CREATE TABLE `sharers` (
  PRIMARY KEY (`id`),
  UNIQUE KEY `uri` (`uri`),
  KEY `uri_2` (`uri`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 CREATE TABLE `tags` (
  `tag` varchar(255) NOT NULL,
