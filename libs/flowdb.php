@@ -11,7 +11,7 @@ class flowDb
     {
         //$this->causes
     }
-    public function addElements($id, $datas, $deleteFromPending = false) // array = links to add (array key[] = array key = fields, value = values)
+    public function addElements($sharerObject, $lastUpdated, $datas, $deleteFromPending = false) // array = links to add (array key[] = array key = fields, value = values)
     {
         if (is_array($datas)) {
             $query = 'INSERT INTO flow (
@@ -47,63 +47,66 @@ class flowDb
             $pending = false;
 
             foreach($datas as $entry) {
-                if (is_array($entry['tags'])) { // Insert or update tag table if tag exist
-                    $tQuery = "INSERT INTO tags(tag)
-                        VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
-                    $tStmt = dbConnexion::getInstance()->prepare($tQuery);
-                    $tStmt->bindParam(':tag', $tag, PDO::PARAM_STR);
-                    foreach($entry['tags'] as $element) {
-                        $tag = trim($element);
-                        $tStmt->execute();
+                if ($entry['updated'] >= $sharerObject->updated) {
+                    if (is_array($entry['tags'])) { // Insert or update tag table if tag exist
+                        $tQuery = "INSERT INTO tags(tag)
+                            VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
+                        $tStmt = dbConnexion::getInstance()->prepare($tQuery);
+                        $tStmt->bindParam(':tag', $tag, PDO::PARAM_STR);
+                        foreach($entry['tags'] as $element) {
+                            $tag = trim($element);
+                            $tStmt->execute();
+                        }
+                        $tStmt->closeCursor();
+                        $tStmt = NULL;
                     }
-                    $tStmt->closeCursor();
-                    $tStmt = NULL;
-                }
-                $sharer     = $id;
-                $link_hash  = md5($entry['link']);
-                $link       = $entry['link'];
-                $title      = $entry['title'];
-                $content    = $entry['content'];
-                $taglist    = is_array($entry['tags']) ? implode(',', $entry['tags']) : '';
-                $permalink  = self::urlToPermalink($entry['permalink']);
-                $published  = $entry['published'];
-                $updated    = $entry['updated'];
-                $firstShare = '';
-                $footPrint  = self::footPrint($entry['permalink']);
-                $origin     = $this->ifReShared($entry);
-                if (is_array($origin)) {
-                    if ($origin['shared'] === false) {
-                        $pSharer = $id;
-                        $pDatas  = serialize($entry);
-                        $pVia    = md5($origin['via']);
-                        $pending = true;
-                        $pStmt->execute();
-                    }
-                    else {
-                        $firstShare = $origin['shared'];
-                        $result = $stmt->execute();
-                    }
-                }
-                else {
-                    $result = $stmt->execute();
-                }
-                if ($result) {
-                    $flowPending = $this->getPendingElements($entry['permalink']);
-                    if (is_array($flowPending)) {
-                        foreach($flowPending as $row) {
-                            $this->addElements($row['sharer'], $row['datas'], $row['id']);
+                    $sharer     = $sharerObject->id;
+                    $link_hash  = md5($entry['link']);
+                    $link       = $entry['link'];
+                    $title      = $entry['title'];
+                    $content    = $entry['content'];
+                    $taglist    = is_array($entry['tags']) ? implode(',', $entry['tags']) : '';
+                    $permalink  = self::urlToPermalink($entry['permalink']);
+                    $published  = $entry['published'];
+                    $updated    = $entry['updated'];
+                    $firstShare = '';
+                    $footPrint  = self::footPrint($entry['permalink']);
+                    $origin     = $this->ifReShared($entry);
+                    if (is_array($origin)) {
+                        if ($origin['shared'] === false) {
+                            $pSharer = $sharer;
+                            $pDatas  = serialize($entry);
+                            $pVia    = md5($origin['via']);
+                            $pending = true;
+                            $pStmt->execute();
+                        }
+                        else {
+                            $firstShare = $origin['shared'];
+                            $result = $stmt->execute();
                         }
                     }
-                    if ($deleteFromPending) {
-                        $dQuery = 'DELETE from flow_pending WHERE id = :dId';
-                        $dStmt  = dbConnexion::getInstance()->prepare($dQuery);
-                        $dStmt->bindValue(':dId', $deleteFromPending, PDO::PARAM_STR);
-                        $dStmt->execute();
-                        $dStmt->closeCursor();
-                        $dStmt = NULL;
+                    else {
+                        $result = $stmt->execute();
+                    }
+                    if ($result) {
+                        $flowPending = $this->getPendingElements($entry['permalink']);
+                        if (is_array($flowPending)) {
+                            foreach($flowPending as $row) {
+                                $this->addElements($row['sharer'], $row['datas'], $row['id']);
+                            }
+                        }
+                        if ($deleteFromPending) {
+                            $dQuery = 'DELETE from flow_pending WHERE id = :dId';
+                            $dStmt  = dbConnexion::getInstance()->prepare($dQuery);
+                            $dStmt->bindValue(':dId', $deleteFromPending, PDO::PARAM_STR);
+                            $dStmt->execute();
+                            $dStmt->closeCursor();
+                            $dStmt = NULL;
+                        }
                     }
                 }
             }
+            $this->setSharerUpdatedFeed($sharerObject->id, strtotime(self::filterDate($lastUpdated)));
             $stmt->closeCursor();
             $pStmt->closeCursor();
             $stmt = $pStmt = NULL;
@@ -173,7 +176,7 @@ class flowDb
 
             $title    = $obj->title;
             $subtitle = $obj->subtitle;
-            $updated  = $obj->updated;
+            $updated  = strtotime(self::filterDate($obj->updated));
             $feed     = $obj->author->uri . '?' . http_build_query(['do' => 'atom']);
             $author   = $obj->author->name;
             $uri      = $obj->author->uri;
@@ -254,6 +257,7 @@ class flowDb
 
     private static function filterDate($date)
     {
+        $date = str_replace('T', ' ', $date);
         return substr($date, 0, -6);
     }
 
@@ -269,11 +273,11 @@ class flowDb
         return $result[0]->updated;
     }
 
-    public function setSharerUpdatedFeed($id, $date)
+    public function setSharerUpdatedFeed($id, $time)
     {
         $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
         $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':updated', $date, PDO::PARAM_STR);
+        $stmt->bindValue(':updated', $time, PDO::PARAM_STR);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         $stmt->closeCursor();
@@ -294,8 +298,8 @@ class flowDb
                     'title'     => (string) $value->title,
                     'link'      => (string) $value->link['href'],
                     'permalink' => (string) $value->id,
-                    'published' => self::filterDate($value->published),
-                    'updated'   => self::filterDate($value->updated),
+                    'published' => strtotime(self::filterDate($value->published)),
+                    'updated'   => strtotime(self::filterDate($value->updated)),
                     'content'   => (string) $value->content,
                     'tags'      => self::tagsToArray($value->category),
                 ];
