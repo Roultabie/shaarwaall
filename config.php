@@ -1,8 +1,9 @@
 <?php
-$config = array (
+$config = [
     'dbHost' => 'localhost',
     'dbName' => 'shaarwaall',
     'dbUser' => 'root',
-    'dbPass' => 'm&t@ll1k',
+    'dbPass' => 'password',
     'tblPrefix' => '',
-);
+    'badCertificateAllowed' => true,
+];
