@@ -237,7 +237,7 @@ class flowDb
         if ($boolResult === true) {
             $query = 'SELECT COUNT(id) AS nb FROM sharers WHERE uri LIKE :uri LIMIT 1;';
             $stmt = dbConnexion::getInstance()->prepare($query);
-            $stmt->bindValue(':uri', $uri .'%', PDO::PARAM_STR);
+            $stmt->bindValue(':uri', '%' . self::removeScheme($uri) .'%', PDO::PARAM_STR);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_OBJ);
             if ($result[0]->nb === '0') {
@@ -359,5 +359,12 @@ class flowDb
             $return = false;
         }
         return $return;
+    }
+
+    private static function removeScheme($url)
+    {
+        $url = ltrim($url, 'http');
+        $url = ltrim($url, 's');
+        return $url;
     }
 }
