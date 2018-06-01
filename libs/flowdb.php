@@ -48,18 +48,6 @@ class flowDb
 
             foreach($datas as $entry) {
                 if ($entry['updated'] >= $sharerObject->last_update || $deleteFromPending) {
-                    if (is_array($entry['tags'])) { // Insert or update tag table if tag exist
-                        $tQuery = "INSERT INTO tags(tag)
-                            VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
-                        $tStmt = dbConnexion::getInstance()->prepare($tQuery);
-                        $tStmt->bindParam(':tag', $tag, PDO::PARAM_STR);
-                        foreach($entry['tags'] as $element) {
-                            $tag = trim($element);
-                            $tStmt->execute();
-                        }
-                        $tStmt->closeCursor();
-                        $tStmt = NULL;
-                    }
                     $sharer     = $sharerObject->id;
                     $link_hash  = md5($entry['link']);
                     $link       = $entry['link'];
@@ -102,6 +90,18 @@ class flowDb
                             $dStmt->execute();
                             $dStmt->closeCursor();
                             $dStmt = NULL;
+                        }
+                        if (is_array($entry['tags'])) { // Insert or update tag table if tag exist
+                            $tQuery = "INSERT INTO tags(tag)
+                                VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
+                            $tStmt = dbConnexion::getInstance()->prepare($tQuery);
+                            $tStmt->bindParam(':tag', $tag, PDO::PARAM_STR);
+                            foreach($entry['tags'] as $element) {
+                                $tag = trim($element);
+                                $tStmt->execute();
+                            }
+                            $tStmt->closeCursor();
+                            $tStmt = NULL;
                         }
                     }
                 }
