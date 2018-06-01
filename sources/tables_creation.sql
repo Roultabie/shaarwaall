@@ -6,8 +6,8 @@ CREATE TABLE `flow` (
  `content` text COLLATE utf8mb4_unicode_ci NOT NULL,
  `tags` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
  `permalink` char(6) COLLATE utf8mb4_unicode_ci NOT NULL,
- `published` datetime NOT NULL,
- `updated` datetime NOT NULL,
+ `published` int(8) NOT NULL DEFAULT '0',
+ `updated` int(8) NOT NULL DEFAULT '0',
  `first_share` char(22) COLLATE utf8mb4_unicode_ci NOT NULL,
  `id` char(22) COLLATE utf8mb4_unicode_ci NOT NULL,
  PRIMARY KEY (`id`) USING BTREE,
@@ -15,21 +15,24 @@ CREATE TABLE `flow` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 CREATE TABLE `flow_pending` (
- `sharer` smallint(6) NOT NULL,
- `updated` datetime NOT NULL,
+ `sharer` text COLLATE utf8mb4_unicode_ci NOT NULL,
+ `updated` int(8) NOT NULL DEFAULT '0',
  `datas` text COLLATE utf8mb4_unicode_ci NOT NULL,
+ `via` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
  `id` char(22) COLLATE utf8mb4_unicode_ci NOT NULL,
- PRIMARY KEY (`id`) USING BTREE
+ PRIMARY KEY (`id`) USING BTREE,
+ KEY `via` (`via`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 CREATE TABLE `sharers` (
  `id` smallint(6) NOT NULL AUTO_INCREMENT,
  `title` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
  `subtitle` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
- `updated` datetime NOT NULL,
+ `updated` int(8) NOT NULL DEFAULT '0',
  `feed` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
  `author` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
  `uri` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+ `last_update` int(8) NOT NULL DEFAULT '0',
  PRIMARY KEY (`id`),
  UNIQUE KEY `uri` (`uri`),
  KEY `uri_2` (`uri`)
