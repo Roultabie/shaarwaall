@@ -286,7 +286,6 @@ class flowDb
 
     public function setSharerLastUpdate($id, $time)
     {
-        var_dump($time);
         $query = 'UPDATE sharers SET last_update = :updated WHERE id = :id';
         $stmt  = dbConnexion::getInstance()->prepare($query);
         $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
