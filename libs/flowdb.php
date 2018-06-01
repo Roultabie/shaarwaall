@@ -48,8 +48,6 @@ class flowDb
 
             foreach($datas as $entry) {
                 if ($entry['updated'] >= $sharerObject->last_update || $deleteFromPending) {
-                    var_dump($sharerObject->id);
-                    var_dump($sharerObject->last_update);
                     if (is_array($entry['tags'])) { // Insert or update tag table if tag exist
                         $tQuery = "INSERT INTO tags(tag)
                             VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
@@ -76,7 +74,7 @@ class flowDb
                     $origin     = $this->ifReShared($entry);
                     if (is_array($origin)) {
                         if ($origin['shared'] === false) {
-                            $pSharer = $sharer;
+                            $pSharer = serialize($sharerObject);
                             $pDatas  = serialize($entry);
                             $pVia    = md5($origin['via']);
                             $pending = true;
@@ -94,7 +92,7 @@ class flowDb
                         $flowPending = $this->getPendingElements($entry['permalink']);
                         if (is_array($flowPending)) {
                             foreach($flowPending as $row) {
-                                $this->addElements($row['sharer'], $row['datas'], $row['id']);
+                                $this->addElements(unserialize($row['sharer']), $row['datas'], $row['id']);
                             }
                         }
                         if ($deleteFromPending) {
@@ -279,7 +277,7 @@ class flowDb
     {
         $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
         $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':updated', $time, PDO::PARAM_STR);
+        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         $stmt->closeCursor();
@@ -291,7 +289,7 @@ class flowDb
         var_dump($time);
         $query = 'UPDATE sharers SET last_update = :updated WHERE id = :id';
         $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':updated', $time, PDO::PARAM_STR);
+        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         $stmt->closeCursor();
@@ -320,7 +318,7 @@ class flowDb
             }
         }
         if ($order === 'ASC') {
-            ksort($entry);
+            ksort($entry, SORT_NUMERIC);
         }
         else {
             krsort($entry);
