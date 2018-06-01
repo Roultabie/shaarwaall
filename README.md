@@ -36,5 +36,6 @@
 - [ ] possibilité d'une sugestion de collections.
 
 ## Système
-- [x ] ajouter un contrôle de la date de mise à jour du flux avec la date de mise à jour de chaque entrée, ne mettre à jour que si changement, et ou mise à jour en fonction de la date de la dernière entrée mise à jour.
-- [ ] actuellement le crowl et la bdd différencient http et https pour un même site, à corriger.
+- [x ] ajouter un contrôle de la date de mise à jour du flux avec la date de mise à jour de chaque entrée, ne mettre à jour que si changement, et ou mise à jour en fonction de la date de la dernière entrée mise à jour,
+- [x] actuellement le crowl et la bdd différencient http et https pour un même site, à corriger.
+- [ ] séparer dans une table les liens des shaares.
