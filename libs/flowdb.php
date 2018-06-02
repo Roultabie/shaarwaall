@@ -1,12 +1,6 @@
 <?php
 class flowDb
 {
-    /**
-     * Execute INSERT sql query
-     * @param array array('sqlField' => 'fieldContent');
-     * @return void
-     */
-
     function __construct()
     {
         //$this->causes
@@ -114,53 +108,6 @@ class flowDb
         return $pending;
     }
 
-    private function linkNotExists($uri)
-    {
-        $return = '';
-        if (!empty($uri)) {
-            $hash  = md5($uri);
-            $query = 'SELECT sharer FROM flow WHERE link_hash = :hash ORDER BY published ASC LIMIT 1;';
-            $stmt  = dbConnexion::getInstance()->prepare($query);
-            $stmt->bindValue(':hash', $hash, PDO::PARAM_STR);
-            $stmt->execute();
-            $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-            $stmt->closeCursor();
-            $stmt = NULL;
-            if (count($result) === 0) {
-                $return = false;
-            }
-            else {
-                $return = (int)$result[0]->sharer;
-            }
-        }
-        return $return;
-    }
-
-    public function getSharers()
-    {
-        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers;';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-        $stmt->closeCursor();
-        $stmt = NULL;
-        return $result;
-    }
-
-    /**
-     * SmallHash via shaarli (sebsauvage)
-     * @param  string $string [description]
-     * @return string $hash   [description]
-     */
-    private static function footPrint($string)
-    {
-        $hash = rtrim(base64_encode(hash('md5', $string, TRUE)), '=');
-        $hash = str_replace('+', '-', $hash); // Get rid of characters which need encoding in URLs.
-        $hash = str_replace('/', '_', $hash);
-        $hash = str_replace('=', '@', $hash);
-        return $hash;
-    }
-
     public function addSharer($obj)
     {
         if (is_object($obj)) {
@@ -184,6 +131,113 @@ class flowDb
             $stmt->closeCursor();
             $stmt = NULL;
         }
+    }
+
+    public function getSharers()
+    {
+        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers;';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $stmt->closeCursor();
+        $stmt = NULL;
+        return $result;
+    }
+
+    public function getSharerUpdatedFeed($id)
+    {
+        $query = 'SELECT updated FROM sharers WHERE id = :id;';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $stmt->closeCursor();
+        $stmt = NULL;
+        return $result[0]->updated;
+    }
+
+    public function setSharerLastUpdate($id, $time)
+    {
+        $query = 'UPDATE sharers SET last_update = :updated WHERE id = :id';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $stmt->closeCursor();
+        $stmt = NULL;
+    }
+
+    public static function flowToArray($obj, $sort, $order, $minDate = '', $maxDate = '')
+    {
+        $curDate = date('Y-m-d H:i:s');
+        $minDate = (empty($minDate)) ? strtotime('1970-01-01 00:00:00') : strtotime($minDate);
+        $maxDate = (empty($maxDate)) ? strtotime($curDate) : strtotime($maxDate);
+        foreach($obj as $value) {
+            $published = strtotime(self::filterDate($value->published));
+            $updated   = strtotime(self::filterDate($value->updated));
+            $key = ($sort === 'published') ? $published : $updated;
+            if ($key >= $minDate && $key <=$maxDate) {
+                $entry[$key] = [
+                    'title'     => (string) $value->title,
+                    'link'      => (string) $value->link['href'],
+                    'permalink' => (string) $value->id,
+                    'published' => strtotime(self::filterDate($value->published)),
+                    'updated'   => strtotime(self::filterDate($value->updated)),
+                    'content'   => (string) $value->content,
+                    'tags'      => self::tagsToArray($value->category),
+                ];
+            }
+        }
+        if ($order === 'ASC') {
+            ksort($entry, SORT_NUMERIC);
+        }
+        else {
+            krsort($entry);
+        }
+        return $entry;
+    }
+
+    // End # public functions -------------------------------------------------
+
+    // Start # private functions ----------------------------------------------
+
+    public function setSharerUpdatedFeed($id, $time)
+    {
+        $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $stmt->closeCursor();
+        $stmt = NULL;
+    }
+
+    private function getPendingElements($uri)
+    {
+        $hash  = md5($uri);
+        $query = 'SELECT sharer, datas, id FROM flow_pending WHERE via = :via;';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindValue(':via', $hash, PDO::PARAM_STR);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+        $stmt = NULL;
+        if (is_array($result) && count($result) > 0) {
+            foreach ($result as $value) {
+                $datas = unserialize($value['datas']);
+                $key   = strtotime($datas['updated']);
+                $pending['sharer'] = $value['sharer'];
+                $pending['id']     = $value['id'];
+                $pending['datas']  = [
+                    $key  => $datas,
+                ];
+            }
+            $return[] = $pending;
+        }
+        else {
+            $return = false;
+        }
+        return $return;
     }
 
     private function ifReShared($entry)
@@ -232,6 +286,28 @@ class flowDb
         return $result;
     }
 
+    private function linkNotExists($uri)
+    {
+        $return = '';
+        if (!empty($uri)) {
+            $hash  = md5($uri);
+            $query = 'SELECT sharer FROM flow WHERE link_hash = :hash ORDER BY published ASC LIMIT 1;';
+            $stmt  = dbConnexion::getInstance()->prepare($query);
+            $stmt->bindValue(':hash', $hash, PDO::PARAM_STR);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_OBJ);
+            $stmt->closeCursor();
+            $stmt = NULL;
+            if (count($result) === 0) {
+                $return = false;
+            }
+            else {
+                $return = (int)$result[0]->sharer;
+            }
+        }
+        return $return;
+    }
+
     private function searchSharer($uri, $boolResult = false)
     {
         if ($boolResult === true) {
@@ -250,79 +326,26 @@ class flowDb
         return $return;
     }
 
-    private static function urlToPermalink($url)
-    {
-        return substr($url, -6);
-    }
-
     private static function filterDate($date)
     {
         $date = str_replace('T', ' ', $date);
         return substr($date, 0, -6);
     }
 
-    public function getSharerUpdatedFeed($id)
+    private static function footPrint($string)
     {
-        $query = 'SELECT updated FROM sharers WHERE id = :id;';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-        $stmt->closeCursor();
-        $stmt = NULL;
-        return $result[0]->updated;
+        $hash = rtrim(base64_encode(hash('md5', $string, TRUE)), '=');
+        $hash = str_replace('+', '-', $hash); // Get rid of characters which need encoding in URLs.
+        $hash = str_replace('/', '_', $hash);
+        $hash = str_replace('=', '@', $hash);
+        return $hash;
     }
 
-    public function setSharerUpdatedFeed($id, $time)
+    private static function removeScheme($url)
     {
-        $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        $stmt->closeCursor();
-        $stmt = NULL;
-    }
-
-    public function setSharerLastUpdate($id, $time)
-    {
-        $query = 'UPDATE sharers SET last_update = :updated WHERE id = :id';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        $stmt->closeCursor();
-        $stmt = NULL;
-    }
-
-    public static function flowToArray($obj, $sort, $order, $minDate = '', $maxDate = '')
-    {
-        $curDate = date('Y-m-d H:i:s');
-        $minDate = (empty($minDate)) ? strtotime('1970-01-01 00:00:00') : strtotime($minDate);
-        $maxDate = (empty($maxDate)) ? strtotime($curDate) : strtotime($maxDate);
-        foreach($obj as $value) {
-            $published = strtotime(self::filterDate($value->published));
-            $updated   = strtotime(self::filterDate($value->updated));
-            $key = ($sort === 'published') ? $published : $updated;
-            if ($key >= $minDate && $key <=$maxDate) {
-                $entry[$key] = [
-                    'title'     => (string) $value->title,
-                    'link'      => (string) $value->link['href'],
-                    'permalink' => (string) $value->id,
-                    'published' => strtotime(self::filterDate($value->published)),
-                    'updated'   => strtotime(self::filterDate($value->updated)),
-                    'content'   => (string) $value->content,
-                    'tags'      => self::tagsToArray($value->category),
-                ];
-            }
-        }
-        if ($order === 'ASC') {
-            ksort($entry, SORT_NUMERIC);
-        }
-        else {
-            krsort($entry);
-        }
-        return $entry;
+        $url = ltrim($url, 'http');
+        $url = ltrim($url, 's');
+        return $url;
     }
 
     private static function tagsToArray($obj)
@@ -333,38 +356,8 @@ class flowDb
         return $tags;
     }
 
-    private function getPendingElements($uri)
+    private static function urlToPermalink($url)
     {
-        $hash  = md5($uri);
-        $query = 'SELECT sharer, datas, id FROM flow_pending WHERE via = :via;';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':via', $hash, PDO::PARAM_STR);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $stmt->closeCursor();
-        $stmt = NULL;
-        if (is_array($result) && count($result) > 0) {
-            foreach ($result as $value) {
-                $datas = unserialize($value['datas']);
-                $key   = strtotime($datas['updated']);
-                $pending['sharer'] = $value['sharer'];
-                $pending['id']     = $value['id'];
-                $pending['datas']  = [
-                    $key  => $datas,
-                ];
-            }
-            $return[] = $pending;
-        }
-        else {
-            $return = false;
-        }
-        return $return;
-    }
-
-    private static function removeScheme($url)
-    {
-        $url = ltrim($url, 'http');
-        $url = ltrim($url, 's');
-        return $url;
+        return substr($url, -6);
     }
 }
