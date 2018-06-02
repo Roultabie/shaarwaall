@@ -34,7 +34,6 @@ class flowDb
                 if ($entry['updated'] >= $sharerObject->last_update) {
                     $sharer     = $sharerObject->id;
                     $link_hash  = md5($entry['link']);
-                    $link       = $entry['link'];
                     $title      = $entry['title'];
                     $content    = $entry['content'];
                     $taglist    = is_array($entry['tags']) ? implode(',', $entry['tags']) : '';
@@ -44,33 +43,35 @@ class flowDb
                     $firstShare = '';
                     $footPrint  = self::footPrint($entry['permalink']);
                     $pending    = false;
-                    $via        = self::isVia($content);
-                    if ($isVia) {
-                        $host        = selft::returnHost($via);
-                        $firstSharer = $this->getSharer($host);
-                        if ($firstSharer) {
-                            $pending = true;
+                    //$via        = self::isVia($content);
+                    $link       = $this->setLink($entry['link'], $published, $sharer, $title);
+                    if ($link) {
+                        // if ($isVia) {
+                        //     $host        = selft::returnHost($via);
+                        //     $firstSharer = $this->getSharer($host);
+                        //     if ($firstSharer) {
+                        //         $pending = true;
+                        //     }
+                        // }
+                        $result = $stmt->execute();
+                        // quand un firstSharer est ajouté, il doit virer tous les pendings liés à sont url partagée.
+                        if ($result) {
+                            $this->setTags($entry['tags']);
                         }
-                    }
-                    $result = $stmt->execute();
-                    // reste à séparer les liens dans leurs tables respectives, et quand un firstSharer est ajouté,
-                    // il doit virer tous les pendings liés à sont url partagée.
-                    if ($result) {
-                        $return = dbConnexion::lastInsertId();
-                        $this->setTags();
+                        else {
+                            $result = false;
+                        }
                     }
                     else {
                         $result = false;
                     }
-                    return $result;
+                    //return $result;
                 }
             }
-            if (!empty($updated) && !$deleteFromPending) $this->setSharerLastUpdate($sharerObject->id, $updated);
+            if (!empty($updated)) $this->setSharerLastUpdate($sharerObject->id, $updated);
             $stmt->closeCursor();
-            $pStmt->closeCursor();
             $stmt = $pStmt = NULL;
         }
-        return $pending;
     }
 
     public function addSharer($obj)
