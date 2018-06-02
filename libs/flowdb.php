@@ -5,17 +5,17 @@ class flowDb
     {
         //$this->causes
     }
-    public function addElements($sharerObject, $datas, $deleteFromPending = false)
+    public function addElements($sharerObject, $datas)
     {
         if (is_array($datas)) {
             $query = 'INSERT INTO flow (
                 sharer, link_hash, link, title, content,
-                tags, permalink, published, updated, first_share, id)
+                tags, permalink, published, updated, first_share, pending, id)
                 VALUES (:sharer, :link_hash, :link, :title, :content,
-                :tags, :permalink,  :published, :updated, :first_share, :id)
+                :tags, :permalink,  :published, :updated, :first_share, :pending, :id)
                 ON DUPLICATE KEY UPDATE link_hash = :link_hash, link = :link,
                 title = :title, content = :content, tags = :tags, published = :published,
-                updated = :updated, first_share = :first_share;';
+                updated = :updated, first_share = :first_share, pending = :pending;';
             $stmt = dbConnexion::getInstance()->prepare($query);
             $stmt->bindParam(':sharer', $sharer, PDO::PARAM_INT);
             $stmt->bindParam(':link_hash', $link_hash, PDO::PARAM_STR);
@@ -27,21 +27,11 @@ class flowDb
             $stmt->bindParam(':published', $published, PDO::PARAM_STR);
             $stmt->bindParam(':updated', $updated, PDO::PARAM_STR);
             $stmt->bindParam(':first_share', $firstShare, PDO::PARAM_STR);
+            $stmt->bindParam(':pending', $pending, PDO::PARAM_BOOL);
             $stmt->bindParam(':id', $footPrint, PDO::PARAM_STR);
 
-            $pQuery = 'INSERT INTO flow_pending (sharer, updated, datas, via, id)
-                VALUES (:pSharer, NOW(), :pDatas, :pVia, :pId)
-                ON DUPLICATE KEY UPDATE updated = NOW();';
-            $pStmt = dbConnexion::getInstance()->prepare($pQuery);
-            $pStmt->bindParam(':pSharer', $pSharer, PDO::PARAM_STR);
-            $pStmt->bindParam(':pDatas', $pDatas, PDO::PARAM_STR);
-            $pStmt->bindParam(':pDatas', $pDatas, PDO::PARAM_STR);
-            $pStmt->bindParam(':pVia', $pVia, PDO::PARAM_STR);
-            $pStmt->bindParam(':pId', $footPrint, PDO::PARAM_STR);
-            $pending = false;
-
             foreach($datas as $entry) {
-                if ($entry['updated'] >= $sharerObject->last_update || $deleteFromPending) {
+                if ($entry['updated'] >= $sharerObject->last_update) {
                     $sharer     = $sharerObject->id;
                     $link_hash  = md5($entry['link']);
                     $link       = $entry['link'];
@@ -53,51 +43,26 @@ class flowDb
                     $updated    = $entry['updated'];
                     $firstShare = '';
                     $footPrint  = self::footPrint($entry['permalink']);
-                    $origin     = $this->ifReShared($entry);
-                    if (is_array($origin)) {
-                        if ($origin['shared'] === false) {
-                            $pSharer = serialize($sharerObject);
-                            $pDatas  = serialize($entry);
-                            $pVia    = md5($origin['via']);
+                    $pending    = false;
+                    $via        = self::isVia($content);
+                    if ($isVia) {
+                        $host        = selft::returnHost($via);
+                        $firstSharer = $this->getSharer($host);
+                        if ($firstSharer) {
                             $pending = true;
-                            $pStmt->execute();
                         }
-                        else {
-                            $firstShare = $origin['shared'];
-                            $result = $stmt->execute();
-                        }
+                    }
+                    $result = $stmt->execute();
+                    // reste à séparer les liens dans leurs tables respectives, et quand un firstSharer est ajouté,
+                    // il doit virer tous les pendings liés à sont url partagée.
+                    if ($result) {
+                        $return = dbConnexion::lastInsertId();
+                        $this->setTags();
                     }
                     else {
-                        $result = $stmt->execute();
+                        $result = false;
                     }
-                    if ($result) {
-                        $flowPending = $this->getPendingElements($entry['permalink']);
-                        if (is_array($flowPending)) {
-                            foreach($flowPending as $row) {
-                                $this->addElements(unserialize($row['sharer']), $row['datas'], $row['id']);
-                            }
-                        }
-                        if ($deleteFromPending) {
-                            $dQuery = 'DELETE from flow_pending WHERE id = :dId';
-                            $dStmt  = dbConnexion::getInstance()->prepare($dQuery);
-                            $dStmt->bindValue(':dId', $deleteFromPending, PDO::PARAM_STR);
-                            $dStmt->execute();
-                            $dStmt->closeCursor();
-                            $dStmt = NULL;
-                        }
-                        if (is_array($entry['tags'])) { // Insert or update tag table if tag exist
-                            $tQuery = "INSERT INTO tags(tag)
-                                VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
-                            $tStmt = dbConnexion::getInstance()->prepare($tQuery);
-                            $tStmt->bindParam(':tag', $tag, PDO::PARAM_STR);
-                            foreach($entry['tags'] as $element) {
-                                $tag = trim($element);
-                                $tStmt->execute();
-                            }
-                            $tStmt->closeCursor();
-                            $tStmt = NULL;
-                        }
-                    }
+                    return $result;
                 }
             }
             if (!empty($updated) && !$deleteFromPending) $this->setSharerLastUpdate($sharerObject->id, $updated);
@@ -127,10 +92,15 @@ class flowDb
             $feed     = $obj->author->uri . '?' . http_build_query(['do' => 'atom']);
             $author   = $obj->author->name;
             $uri      = $obj->author->uri;
-            $stmt->execute();
+            $result   = $stmt->execute();
             $stmt->closeCursor();
             $stmt = NULL;
+            $return = ($result) ? dbConnexion::lastInsertId() : $false;
         }
+        else {
+            $return = false;
+        }
+        return $return;
     }
 
     public function getSharers()
@@ -141,6 +111,26 @@ class flowDb
         $result = $stmt->fetchAll(PDO::FETCH_OBJ);
         $stmt->closeCursor();
         $stmt = NULL;
+        return $result;
+    }
+
+    public function getSharer($ressource, $addIfNotExists = true)
+    {
+        $cond  = (is_int($ressource)) ? $where = 'id = :id' : 'uri LIKE :uri';
+        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers WHERE ' . $cond . ' LIMIT 1;';
+        // ajouter bindParam avec le cleanHost without scheme
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_OBJ);
+        $stmt->closeCursor();
+        $stmt = NULL;
+        if (!$result && $addIfNotExists) {
+            $flow = feedParser::loadFeed($uri, 1);
+            if ($flow) {
+                $sharer = $this->addSharer($flow);
+                $result = ($sharer) ? : $this->getSharer($sharer);
+            }
+        }
         return $result;
     }
 
@@ -240,44 +230,13 @@ class flowDb
         return $return;
     }
 
-    private function ifReShared($entry)
+    private static function isVia($content)
     {
         if (is_array($entry)) {
             $pattern = '/via([\s:]*)?<a href="(?P<href>(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?)">/i';
-            $text    = $entry['content'];
-            preg_match($pattern, $text, $matches);
+            preg_match($pattern, $content, $matches);
             if (count($matches) > 0) {
-                $elements = parse_url($matches['href']);
-                array_pop($elements);
-                $shaarli = array_shift($elements) . '://' . implode($elements);
-                if ($this->searchSharer($shaarli, true)) {
-                    $shared = $this->linkNotExists($entry['link']);
-                    if ($shared === false) {
-                        $result['cause']  = 'source_not_in_database';
-                        $result['via']    = $matches['href'];
-                        $result['shared'] = false;
-                    }
-                    else {
-                        $result['shared'] = $shared;
-                    }
-                }
-                else {
-                    if (feedParser::isShaarli($shaarli)) {
-                        $flow = feedParser::loadFeed($shaarli, 1);
-                        if ($flow) {
-                            $this->addSharer($flow);
-                            $result['cause']  = 'new_source';
-                            $result['via']    = $matches['href'];
-                            $result['shared'] = false;
-                        }
-                        else {
-                            $result = false;
-                        }
-                    }
-                    else {
-                        $result = false;
-                    }
-                }
+               $result = $matches['href'];
             }
             else {
                 $result = false;
@@ -308,22 +267,27 @@ class flowDb
         return $return;
     }
 
-    private function searchSharer($uri, $boolResult = false)
+    private function setTags($tags)
     {
-        if ($boolResult === true) {
-            $query = 'SELECT COUNT(id) AS nb FROM sharers WHERE uri LIKE :uri LIMIT 1;';
+        if (is_array($tags)) { // Insert or update tag table if tag exist
+            $query = "INSERT INTO tags(tag)
+                VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
             $stmt = dbConnexion::getInstance()->prepare($query);
-            $stmt->bindValue(':uri', '%' . self::removeScheme($uri) .'%', PDO::PARAM_STR);
-            $stmt->execute();
-            $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-            if ($result[0]->nb === '0') {
-                $return = false;
+            $stmt->bindParam(':tag', $tag, PDO::PARAM_STR);
+            foreach($tags as $tag) {
+                $tag = trim($tag);
+                $stmt->execute();
             }
-            else {
-                $return = true;
-            }
+            $stmt->closeCursor();
+            $stmt = NULL;
         }
-        return $return;
+    }
+
+    private static function returnHost($url, $withScheme = true)
+    {
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+        $host   = parse_url($url, PHP_URL_HOST);
+        return ($withScheme) ? $scheme . '://' . $host : $host;
     }
 
     private static function filterDate($date)
@@ -339,13 +303,6 @@ class flowDb
         $hash = str_replace('/', '_', $hash);
         $hash = str_replace('=', '@', $hash);
         return $hash;
-    }
-
-    private static function removeScheme($url)
-    {
-        $url = ltrim($url, 'http');
-        $url = ltrim($url, 's');
-        return $url;
     }
 
     private static function tagsToArray($obj)
