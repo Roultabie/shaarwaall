@@ -5,7 +5,7 @@ class flowDb
     {
         //$this->causes
     }
-    public function addElements($sharerObject, $datas, $deleteFromPending = false) // array = links to add (array key[] = array key = fields, value = values)
+    public function addElements($sharerObject, $datas, $deleteFromPending = false)
     {
         if (is_array($datas)) {
             $query = 'INSERT INTO flow (
