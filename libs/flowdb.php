@@ -267,6 +267,24 @@ class flowDb
         return $return;
     }
 
+    private function setLink($href, $published, $sharer, $title = '')
+    {
+        $query = 'INSERT INTO links (href, title, published, sharer)
+            VALUES (:href, :title, :published, :sharer)
+            ON DUPLICATE KEY
+            UPDATE sharer = CASE
+                    WHEN published < published THEN :sharer
+                    ELSE sharer
+                END,
+            published = LEAST(published, VALUES(published)),
+            hits = hits+1';
+        $stmt = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindValue(':href', $href, PDO::PARAM_STR);
+        $stmt->bindValue(':published', $published, PDO::PARAM_INT);
+        $stmt->bindValue(':sharer', $sharer, PDO::PARAM_INT);
+        $stmt->bindValue(':title', $title, PDO::PARAM_STR);
+    }
+
     private function setTags($tags)
     {
         if (is_array($tags)) { // Insert or update tag table if tag exist
