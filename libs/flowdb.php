@@ -273,16 +273,21 @@ class flowDb
             VALUES (:href, :title, :published, :sharer)
             ON DUPLICATE KEY
             UPDATE sharer = CASE
-                    WHEN published < published THEN :sharer
+                    WHEN published > VALUES(published) THEN :sharer
                     ELSE sharer
                 END,
             published = LEAST(published, VALUES(published)),
-            hits = hits+1';
+            hits = hits+1;';
         $stmt = dbConnexion::getInstance()->prepare($query);
         $stmt->bindValue(':href', $href, PDO::PARAM_STR);
         $stmt->bindValue(':published', $published, PDO::PARAM_INT);
         $stmt->bindValue(':sharer', $sharer, PDO::PARAM_INT);
         $stmt->bindValue(':title', $title, PDO::PARAM_STR);
+        $stmt->execute();
+        $stmt->closeCursor();
+        $stmt = NULL;
+        $state = dbConnexion::getInstance()->lastInsertId();
+        return $state;
     }
 
     private function setTags($tags)
