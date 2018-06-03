@@ -76,7 +76,7 @@ class flowDb
         return $result;
     }
 
-    public function getSharer($ressource, $addIfNotExists = true)
+    public function getSharer($ressource)
     {
         $cond  = (is_int($ressource)) ? $where = 'id = :id' : 'uri LIKE :uri';
         $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers WHERE ' . $cond . ' LIMIT 1;';
@@ -86,13 +86,6 @@ class flowDb
         $result = $stmt->fetch(PDO::FETCH_OBJ);
         $stmt->closeCursor();
         $stmt = NULL;
-        if (!$result && $addIfNotExists) {
-            $flow = feedParser::loadFeed($uri, 1);
-            if ($flow) {
-                $sharer = $this->setSharer($flow);
-                $result = ($sharer) ? : $this->getSharer($sharer);
-            }
-        }
         return $result;
     }
 
