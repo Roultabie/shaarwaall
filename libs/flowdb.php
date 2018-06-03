@@ -5,7 +5,8 @@ class flowDb
     {
         //$this->causes
     }
-    public function addElements($sharerObject, $datas)
+
+    public function setElements($sharerObject, $datas)
     {
         if (is_array($datas)) {
             $query = 'INSERT INTO flow (
@@ -64,7 +65,38 @@ class flowDb
         }
     }
 
-    public function addSharer($data)
+    public function getSharers()
+    {
+        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers;';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $stmt->closeCursor();
+        $stmt = NULL;
+        return $result;
+    }
+
+    public function getSharer($ressource, $addIfNotExists = true)
+    {
+        $cond  = (is_int($ressource)) ? $where = 'id = :id' : 'uri LIKE :uri';
+        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers WHERE ' . $cond . ' LIMIT 1;';
+        // ajouter bindParam avec le cleanHost without scheme
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_OBJ);
+        $stmt->closeCursor();
+        $stmt = NULL;
+        if (!$result && $addIfNotExists) {
+            $flow = feedParser::loadFeed($uri, 1);
+            if ($flow) {
+                $sharer = $this->setSharer($flow);
+                $result = ($sharer) ? : $this->getSharer($sharer);
+            }
+        }
+        return $result;
+    }
+
+    public function setSharer($data)
     {
         $query = 'INSERT IGNORE INTO sharers (title, subtitle, updated, feed, author, uri)
             VALUES (:title, :subtitle, :updated, :feed, :author, :uri);';
@@ -105,37 +137,6 @@ class flowDb
         return $return;
     }
 
-    public function getSharers()
-    {
-        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers;';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-        $stmt->closeCursor();
-        $stmt = NULL;
-        return $result;
-    }
-
-    public function getSharer($ressource, $addIfNotExists = true)
-    {
-        $cond  = (is_int($ressource)) ? $where = 'id = :id' : 'uri LIKE :uri';
-        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers WHERE ' . $cond . ' LIMIT 1;';
-        // ajouter bindParam avec le cleanHost without scheme
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_OBJ);
-        $stmt->closeCursor();
-        $stmt = NULL;
-        if (!$result && $addIfNotExists) {
-            $flow = feedParser::loadFeed($uri, 1);
-            if ($flow) {
-                $sharer = $this->addSharer($flow);
-                $result = ($sharer) ? : $this->getSharer($sharer);
-            }
-        }
-        return $result;
-    }
-
     public function getSharerUpdatedFeed($id)
     {
         $query = 'SELECT updated FROM sharers WHERE id = :id;';
@@ -148,9 +149,9 @@ class flowDb
         return $result[0]->updated;
     }
 
-    public function setSharerLastUpdate($id, $time)
+    public function setSharerUpdatedFeed($id, $time)
     {
-        $query = 'UPDATE sharers SET last_update = :updated WHERE id = :id';
+        $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
         $stmt  = dbConnexion::getInstance()->prepare($query);
         $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -159,9 +160,9 @@ class flowDb
         $stmt = NULL;
     }
 
-    public function setSharerUpdatedFeed($id, $time)
+    public function setSharerLastUpdate($id, $time)
     {
-        $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
+        $query = 'UPDATE sharers SET last_update = :updated WHERE id = :id';
         $stmt  = dbConnexion::getInstance()->prepare($query);
         $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
