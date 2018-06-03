@@ -46,17 +46,10 @@ class flowDb
                     //$via        = self::isVia($content);
                     $link       = $this->setLink($entry['link'], $published, $sharer, $title);
                     if ($link) {
-                        // if ($isVia) {
-                        //     $host        = selft::returnHost($via);
-                        //     $firstSharer = $this->getSharer($host);
-                        //     if ($firstSharer) {
-                        //         $pending = true;
-                        //     }
-                        // }
                         $result = $stmt->execute();
-                        // quand un firstSharer est ajouté, il doit virer tous les pendings liés à sont url partagée.
                         if ($result) {
                             $this->setTags($entry['tags']);
+                            $result = $updated;
                         }
                         else {
                             $result = false;
@@ -65,12 +58,14 @@ class flowDb
                     else {
                         $result = false;
                     }
-                    //return $result;
+                }
+                else {
+                    $result = false;
                 }
             }
-            if (!empty($updated)) $this->setSharerLastUpdate($sharerObject->id, $updated);
             $stmt->closeCursor();
             $stmt = $pStmt = NULL;
+            return $result;
         }
     }
 
