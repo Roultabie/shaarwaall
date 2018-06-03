@@ -9,16 +9,15 @@ class flowDb
     {
         if (is_array($datas)) {
             $query = 'INSERT INTO flow (
-                sharer, link_hash, link, title, content,
-                tags, permalink, published, updated, first_share, pending, id)
-                VALUES (:sharer, :link_hash, :link, :title, :content,
-                :tags, :permalink,  :published, :updated, :first_share, :pending, :id)
-                ON DUPLICATE KEY UPDATE link_hash = :link_hash, link = :link,
-                title = :title, content = :content, tags = :tags, published = :published,
-                updated = :updated, first_share = :first_share, pending = :pending;';
+                sharer, link, title, content, tags, permalink,
+                published, updated, first_share, id)
+                VALUES (:sharer, :link, :title, :content, :tags,
+                :permalink, :published, :updated, :first_share, :id)
+                ON DUPLICATE KEY UPDATE link = :link,
+                title = :title, content = :content, tags = :tags,
+                updated = :updated, first_share = :first_share';
             $stmt = dbConnexion::getInstance()->prepare($query);
             $stmt->bindParam(':sharer', $sharer, PDO::PARAM_INT);
-            $stmt->bindParam(':link_hash', $link_hash, PDO::PARAM_STR);
             $stmt->bindParam(':link', $link, PDO::PARAM_STR);
             $stmt->bindParam(':title', $title, PDO::PARAM_STR);
             $stmt->bindParam(':content', $content, PDO::PARAM_STR);
@@ -27,7 +26,6 @@ class flowDb
             $stmt->bindParam(':published', $published, PDO::PARAM_STR);
             $stmt->bindParam(':updated', $updated, PDO::PARAM_STR);
             $stmt->bindParam(':first_share', $firstShare, PDO::PARAM_STR);
-            $stmt->bindParam(':pending', $pending, PDO::PARAM_BOOL);
             $stmt->bindParam(':id', $footPrint, PDO::PARAM_STR);
 
             foreach($datas as $entry) {
