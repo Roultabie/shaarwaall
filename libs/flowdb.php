@@ -169,6 +169,17 @@ class flowDb
         $stmt = NULL;
     }
 
+    public function setSharerUpdatedFeed($id, $time)
+    {
+        $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $stmt->closeCursor();
+        $stmt = NULL;
+    }
+
     public static function flowToArray($obj, $sort, $order, $minDate = '', $maxDate = '')
     {
         $curDate = date('Y-m-d H:i:s');
@@ -202,60 +213,6 @@ class flowDb
     // End # public functions -------------------------------------------------
 
     // Start # private functions ----------------------------------------------
-
-    public function setSharerUpdatedFeed($id, $time)
-    {
-        $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        $stmt->closeCursor();
-        $stmt = NULL;
-    }
-
-    private function getPendingElements($uri)
-    {
-        $hash  = md5($uri);
-        $query = 'SELECT sharer, datas, id FROM flow_pending WHERE via = :via;';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':via', $hash, PDO::PARAM_STR);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $stmt->closeCursor();
-        $stmt = NULL;
-        if (is_array($result) && count($result) > 0) {
-            foreach ($result as $value) {
-                $datas = unserialize($value['datas']);
-                $key   = strtotime($datas['updated']);
-                $pending['sharer'] = $value['sharer'];
-                $pending['id']     = $value['id'];
-                $pending['datas']  = [
-                    $key  => $datas,
-                ];
-            }
-            $return[] = $pending;
-        }
-        else {
-            $return = false;
-        }
-        return $return;
-    }
-
-    private static function isVia($content)
-    {
-        if (is_array($entry)) {
-            $pattern = '/via([\s:]*)?<a href="(?P<href>(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?)">/i';
-            preg_match($pattern, $content, $matches);
-            if (count($matches) > 0) {
-               $result = $matches['href'];
-            }
-            else {
-                $result = false;
-            }
-        }
-        return $result;
-    }
 
     private function linkNotExists($uri)
     {
