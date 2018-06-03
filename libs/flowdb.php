@@ -65,17 +65,6 @@ class flowDb
         }
     }
 
-    public function getSharers()
-    {
-        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers;';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-        $stmt->closeCursor();
-        $stmt = NULL;
-        return $result;
-    }
-
     public function getSharer($res)
     {
         // res = :res for ID, res LIKE :res for uri
@@ -134,6 +123,17 @@ class flowDb
         return $return;
     }
 
+    public function getSharers()
+    {
+        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers;';
+        $stmt  = dbConnexion::getInstance()->prepare($query);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $stmt->closeCursor();
+        $stmt = NULL;
+        return $result;
+    }
+
     public function getSharerUpdatedFeed($id)
     {
         $query = 'SELECT updated FROM sharers WHERE id = :id;';
@@ -157,9 +157,9 @@ class flowDb
         $stmt = NULL;
     }
 
-    public function setSharerLastUpdate($id, $time)
+    public function setSharerLastEntryUpdated($id, $time)
     {
-        $query = 'UPDATE sharers SET last_update = :updated WHERE id = :id';
+        $query = 'UPDATE sharers SET last_entry_updated = :updated WHERE id = :id';
         $stmt  = dbConnexion::getInstance()->prepare($query);
         $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
