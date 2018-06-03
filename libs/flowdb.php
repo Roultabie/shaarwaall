@@ -38,7 +38,7 @@ class flowDb
                     $content    = $entry['content'];
                     $taglist    = is_array($entry['tags']) ? implode(',', $entry['tags']) : '';
                     $permalink  = self::urlToPermalink($entry['permalink']);
-                    $published  = $entry['published'];
+                    $published  = ($entry['published']) ? $entry['published'] : $entry['updated'];
                     $updated    = $entry['updated'];
                     $firstShare = '';
                     $footPrint  = self::footPrint($entry['permalink']);
@@ -74,29 +74,40 @@ class flowDb
         }
     }
 
-    public function addSharer($obj)
+    public function addSharer($data)
     {
-        if (is_object($obj)) {
-            $query = 'INSERT INTO sharers (title, subtitle, updated, feed, author, uri)
-                VALUES (:title, :subtitle, :updated, :feed, :author, :uri);';
-            $stmt = dbConnexion::getInstance()->prepare($query);
-            $stmt->bindParam(':title', $title, PDO::PARAM_STR);
-            $stmt->bindParam(':subtitle', $subtitle, PDO::PARAM_STR);
-            $stmt->bindParam(':updated', $updated, PDO::PARAM_STR);
-            $stmt->bindParam(':feed', $feed, PDO::PARAM_STR);
-            $stmt->bindParam(':author', $author, PDO::PARAM_STR);
-            $stmt->bindParam(':uri', $uri, PDO::PARAM_STR);
-
-            $title    = $obj->title;
-            $subtitle = $obj->subtitle;
-            $updated  = strtotime(self::filterDate($obj->updated));
-            $feed     = $obj->author->uri . '?' . http_build_query(['do' => 'atom']);
-            $author   = $obj->author->name;
-            $uri      = $obj->author->uri;
+        $query = 'INSERT IGNORE INTO sharers (title, subtitle, updated, feed, author, uri)
+            VALUES (:title, :subtitle, :updated, :feed, :author, :uri);';
+        $stmt = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindParam(':title', $title, PDO::PARAM_STR);
+        $stmt->bindParam(':subtitle', $subtitle, PDO::PARAM_STR);
+        $stmt->bindParam(':updated', $updated, PDO::PARAM_STR);
+        $stmt->bindParam(':feed', $feed, PDO::PARAM_STR);
+        $stmt->bindParam(':author', $author, PDO::PARAM_STR);
+        $stmt->bindParam(':uri', $uri, PDO::PARAM_STR);
+        if (is_object($data)) {
+            $title    = $data->title;
+            $subtitle = $data->subtitle;
+            $updated  = strtotime(self::filterDate($data->updated));
+            $feed     = $data->author->uri . '?' . http_build_query(['do' => 'atom']);
+            $author   = $data->author->name;
+            $uri      = $data->author->uri;
             $result   = $stmt->execute();
             $stmt->closeCursor();
             $stmt = NULL;
-            $return = ($result) ? dbConnexion::lastInsertId() : $false;
+            $return = ($result) ? dbConnexion::getInstance()->lastInsertId() : $false;
+        }
+        elseif (is_array($data)) {
+            $title    = $data['title'];
+            $subtitle = $data['subtitle'];
+            $updated  = strtotime(self::filterDate($data['updated']));
+            $feed     = $data['uri'] . '?' . http_build_query(['do' => 'atom']);
+            $author   = $data['name'];
+            $uri      = $data['uri'];
+            $result   = $stmt->execute();
+            $stmt->closeCursor();
+            $stmt = NULL;
+            $return = ($result) ? dbConnexion::getInstance()->lastInsertId() : $false;
         }
         else {
             $return = false;
@@ -270,6 +281,7 @@ class flowDb
 
     private function setLink($href, $published, $sharer, $title = '')
     {
+        $published = (empty($published)) ? time() : $published; // protect against priority ofr poblished 0
         $query = 'INSERT INTO links (href, title, published, sharer)
             VALUES (:href, :title, :published, :sharer)
             ON DUPLICATE KEY
