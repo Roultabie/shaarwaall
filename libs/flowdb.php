@@ -76,12 +76,16 @@ class flowDb
         return $result;
     }
 
-    public function getSharer($ressource)
+    public function getSharer($res)
     {
-        $cond  = (is_int($ressource)) ? $where = 'id = :id' : 'uri LIKE :uri';
-        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers WHERE ' . $cond . ' LIMIT 1;';
-        // ajouter bindParam avec le cleanHost without scheme
+        // res = :res for ID, res LIKE :res for uri
+        $cond  = (is_int($res)) ? 'res = :res' : 'res LIKE :res';
+        $cond  = ' WHERE ' . $cond;
+        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers ' . $cond . ';';
         $stmt  = dbConnexion::getInstance()->prepare($query);
+        $res   = (is_int($res)) ? $res : self::returnHost($res, true);
+        $param = (is_int($res)) ? PDO::PARAM_INT : PDO::PARAM_STR;
+        $stmt->bindValue(':res', $res, $param);
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_OBJ);
         $stmt->closeCursor();
