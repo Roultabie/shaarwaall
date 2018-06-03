@@ -44,15 +44,15 @@ class flowDb
                     if ($link) {
                         $result = $stmt->execute();
                         if ($result) {
-                            $result['tags']   = $entry['tags'];
-                            $result['update'] = $updated;
+                            $return['tags']   = $entry['tags'];
+                            $return['update'] = $updated;
                         }
                         else {
-                            $result = false;
+                            $return = false;
                         }
                     }
                     else {
-                        $result = false;
+                        $return = false;
                     }
                 }
                 else {
@@ -61,7 +61,7 @@ class flowDb
             }
             $stmt->closeCursor();
             $stmt = $pStmt = NULL;
-            return $result;
+            return $return;
         }
     }
 
