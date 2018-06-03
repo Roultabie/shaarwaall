@@ -18,7 +18,7 @@
 - [ ] afficher à côté un numéro dans une icône avec le nombre de shaares total,
 - [x] si indiqué via *** et que c'est via un shaarli, alors aller chercher dans la bdd le shaare pointé et le mettre en source,
 - [x] vérifier l'existance du shaarli source du "via" dans la liste, si il n'existe pas, le rajouter,
-- [ ] si un shaare "via" est repointé, alors on partage avec la source d'origine même si indiqué "via" un autre.
+- [x] si un shaare "via" est repointé, alors on partage avec la source d'origine même si indiqué "via" un autre.
 
 ### Partage, ergonomie
 - [ ] Quand on clique sur l'icône du nombre de partages, le post tourne (flip?) et l'on a accès à différents partages par date ASC.
@@ -38,4 +38,4 @@
 ## Système
 - [x ] ajouter un contrôle de la date de mise à jour du flux avec la date de mise à jour de chaque entrée, ne mettre à jour que si changement, et ou mise à jour en fonction de la date de la dernière entrée mise à jour,
 - [x] actuellement le crowl et la bdd différencient http et https pour un même site, à corriger.
-- [ ] séparer dans une table les liens des shaares.
+- [x] séparer dans une table les liens des shaares.
