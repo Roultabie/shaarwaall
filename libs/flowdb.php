@@ -125,7 +125,7 @@ class flowDb
 
     public function getSharers()
     {
-        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers;';
+        $query = 'SELECT id, title, updated, feed, uri, last_entry_updated FROM sharers;';
         $stmt  = dbConnexion::getInstance()->prepare($query);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_OBJ);
