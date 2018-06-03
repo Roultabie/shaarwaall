@@ -43,8 +43,8 @@ class flowDb
                     if ($link) {
                         $result = $stmt->execute();
                         if ($result) {
-                            $this->setTags($entry['tags']);
-                            $result = $updated;
+                            $result['tags']   = $entry['tags'];
+                            $result['update'] = $updated;
                         }
                         else {
                             $result = false;
@@ -170,6 +170,22 @@ class flowDb
         $stmt = NULL;
     }
 
+    public function setTags($tags)
+    {
+        if (is_array($tags)) { // Insert or update tag table if tag exist
+            $query = "INSERT INTO tags(tag)
+                VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
+            $stmt = dbConnexion::getInstance()->prepare($query);
+            $stmt->bindParam(':tag', $tag, PDO::PARAM_STR);
+            foreach($tags as $tag) {
+                $tag = trim($tag);
+                $stmt->execute();
+            }
+            $stmt->closeCursor();
+            $stmt = NULL;
+        }
+    }
+
     public static function flowToArray($obj, $sort, $order, $minDate = '', $maxDate = '')
     {
         $curDate = date('Y-m-d H:i:s');
@@ -248,22 +264,6 @@ class flowDb
         $stmt = NULL;
         $state = dbConnexion::getInstance()->lastInsertId();
         return $state;
-    }
-
-    private function setTags($tags)
-    {
-        if (is_array($tags)) { // Insert or update tag table if tag exist
-            $query = "INSERT INTO tags(tag)
-                VALUES (:tag) ON DUPLICATE KEY UPDATE hits = hits+1;";
-            $stmt = dbConnexion::getInstance()->prepare($query);
-            $stmt->bindParam(':tag', $tag, PDO::PARAM_STR);
-            foreach($tags as $tag) {
-                $tag = trim($tag);
-                $stmt->execute();
-            }
-            $stmt->closeCursor();
-            $stmt = NULL;
-        }
     }
 
     private static function returnHost($url, $withScheme = true)
