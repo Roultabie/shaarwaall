@@ -31,7 +31,6 @@ class flowDb
             foreach($datas as $entry) {
                 if ($entry['updated'] >= $sharerObject->last_update) {
                     $sharer     = $sharerObject->id;
-                    $link_hash  = md5($entry['link']);
                     $title      = $entry['title'];
                     $content    = $entry['content'];
                     $taglist    = is_array($entry['tags']) ? implode(',', $entry['tags']) : '';
@@ -40,8 +39,6 @@ class flowDb
                     $updated    = $entry['updated'];
                     $firstShare = '';
                     $footPrint  = self::footPrint($entry['permalink']);
-                    $pending    = false;
-                    //$via        = self::isVia($content);
                     $link       = $this->setLink($entry['link'], $published, $sharer, $title);
                     if ($link) {
                         $result = $stmt->execute();
