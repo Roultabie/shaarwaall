@@ -6,6 +6,13 @@ class flowDb
         //$this->causes
     }
 
+    /**
+     * Add elements to flow table, return an array of tags and updated timestamp if success
+     *
+     * @param object  $sharerObject need a simple xmlElement generated object
+     * @param array $datas need a simple xml datas parsed by flowToArray method
+     * @return array
+     */
     public function setFlow($sharerObject, $datas)
     {
         if (is_array($datas)) {
