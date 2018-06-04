@@ -160,10 +160,10 @@ class flowDb
     }
 
     /**
-     * Update sharer entry with updated entry from atom feed
+     * Update sharer entry with updated entry from atom feed.
      *
-     * @param int $id id of sharer
-     * @param int $time timestamp of updated entry
+     * @param int $id id of sharer.
+     * @param int $time timestamp of updated entry.
      * @return void
      */
     public function setSharerUpdatedFeed($id, $time)
@@ -178,10 +178,10 @@ class flowDb
     }
 
     /**
-     * Update sharer the last updated entry from atom feed parsed
+     * Update sharer the last updated entry from atom feed parsed.
      *
-     * @param int $id id of sharer
-     * @param int $time timestamp of updated entry
+     * @param int $id id of sharer.
+     * @param int $time timestamp of updated entry.
      * @return void
      */
     public function setSharerLastEntryUpdated($id, $time)
@@ -196,9 +196,9 @@ class flowDb
     }
 
     /**
-     * Add tags in tags table, if exists, update hit+1
+     * Add tags in tags table, if exists, update hit+1.
      *
-     * @param array $tags list of tags
+     * @param array $tags list of tags.
      * @return void
      */
     public function setTags($tags)
