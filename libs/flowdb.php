@@ -72,6 +72,13 @@ class flowDb
         }
     }
 
+    /**
+     * Return object of current sharer requested by $res if success.
+     * $ressource can be id or url of a sharer.
+     *
+     * @param int/string $res if int, search is by id, else il by uri
+     * @return object requested sharer if success, else false.
+     */
     public function getSharer($res)
     {
         // res = :res for ID, res LIKE :res for uri
