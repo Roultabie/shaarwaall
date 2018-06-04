@@ -7,10 +7,10 @@ class flowDb
     }
 
     /**
-     * Add elements to flow table, return an array of tags and updated timestamp if success
+     * Add elements to flow table, return an array of tags and updated timestamp if success.
      *
-     * @param object  $sharerObject need a simple xmlElement generated object
-     * @param array $datas need a simple xml datas parsed by flowToArray method
+     * @param object  $sharerObject need a object from array given by getSharers method.
+     * @param array $datas need a simple xml datas parsed by flowToArray method.
      * @return array
      */
     public function setFlow($sharerObject, $datas)
@@ -76,7 +76,7 @@ class flowDb
      * Return object of current sharer requested by $res if success.
      * $ressource can be id or url of a sharer.
      *
-     * @param int/string $res if int, search is by id, else il by uri
+     * @param int/string $res if int, search is by id, else il by uri.
      * @return object requested sharer if success, else false.
      */
     public function getSharer($res)
