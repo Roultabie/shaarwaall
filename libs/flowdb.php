@@ -143,6 +143,11 @@ class flowDb
         return $return;
     }
 
+    /**
+     * Return object of sharers list.
+     *
+     * @return object if success, else false.
+     */
     public function getSharers()
     {
         $query = 'SELECT id, title, updated, feed, uri, last_entry_updated FROM sharers;';
