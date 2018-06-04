@@ -6,7 +6,7 @@ class flowDb
         //$this->causes
     }
 
-    public function setElements($sharerObject, $datas)
+    public function setFlow($sharerObject, $datas)
     {
         if (is_array($datas)) {
             $query = 'INSERT INTO flow (
