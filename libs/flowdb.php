@@ -217,7 +217,17 @@ class flowDb
         }
     }
 
-    public static function flowToArray($obj, $sort, $order, $minDate = '', $maxDate = '')
+    /**
+     * Transform atom feed parsed by simplexmlelement into array.
+     *
+     * @param object $obj a simplexml atom feed.
+     * @param string $sort ASC DESC order by date.
+     * @param string $order updated published for sort and mindate, maxdate.
+     * @param string $minDate to limit nb of elements by min date.
+     * @param string $maxDate to limit nb of elements by max date.
+     * @return array table of entries.
+     */
+    public static function flowToArray(object $obj, string $sort, string $order, string $minDate = '', string $maxDate = '')
     {
         $curDate = date('Y-m-d H:i:s');
         $minDate = (empty($minDate)) ? strtotime('1970-01-01 00:00:00') : strtotime($minDate);
