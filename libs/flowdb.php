@@ -96,6 +96,12 @@ class flowDb
         return $result;
     }
 
+    /**
+     * Add new sharer in sharer table.
+     *
+     * @param object/array $data need a simple xmlElement generated object or array.
+     * @return int/bool id of insert if success, else false.
+     */
     public function setSharer($data)
     {
         $query = 'INSERT IGNORE INTO sharers (title, subtitle, updated, feed, author, uri)
