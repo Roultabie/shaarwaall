@@ -13,7 +13,7 @@ class flowDb
      * @param array $datas need a simple xml datas parsed by flowToArray method.
      * @return array
      */
-    public function setFlow($sharerObject, $datas)
+    public function setFlow(object $sharerObject, array $datas)
     {
         if (is_array($datas)) {
             $query = 'INSERT INTO flow (
@@ -166,7 +166,7 @@ class flowDb
      * @param int $time timestamp of updated entry.
      * @return void
      */
-    public function setSharerUpdatedFeed($id, $time)
+    public function setSharerUpdatedFeed(int $id, int $time)
     {
         $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
         $stmt  = dbConnexion::getInstance()->prepare($query);
@@ -184,7 +184,7 @@ class flowDb
      * @param int $time timestamp of updated entry.
      * @return void
      */
-    public function setSharerLastEntryUpdated($id, $time)
+    public function setSharerLastEntryUpdated(int $id, int $time)
     {
         $query = 'UPDATE sharers SET last_entry_updated = :updated WHERE id = :id';
         $stmt  = dbConnexion::getInstance()->prepare($query);
@@ -201,7 +201,7 @@ class flowDb
      * @param array $tags list of tags.
      * @return void
      */
-    public function setTags($tags)
+    public function setTags(array $tags)
     {
         if (is_array($tags)) { // Insert or update tag table if tag exist
             $query = "INSERT INTO tags(tag)
@@ -261,7 +261,7 @@ class flowDb
 
     // Start # private functions ----------------------------------------------
 
-    private function linkNotExists($uri)
+    private function linkNotExists(string $uri)
     {
         $return = '';
         if (!empty($uri)) {
@@ -283,7 +283,7 @@ class flowDb
         return $return;
     }
 
-    private function setLink($href, $published, $sharer, $title = '')
+    private function setLink(string $href, int $published, int $sharer, string $title = '')
     {
         $published = (empty($published)) ? time() : $published; // protect against priority ofr poblished 0
         $query = 'INSERT INTO links (href, title, published, sharer)
@@ -307,7 +307,7 @@ class flowDb
         return $state;
     }
 
-    private static function returnHost($url, $withScheme = true)
+    private static function returnHost(string $url, bool $withScheme = true)
     {
         $scheme = parse_url($url, PHP_URL_SCHEME);
         $host   = parse_url($url, PHP_URL_HOST);
@@ -320,7 +320,7 @@ class flowDb
         return substr($date, 0, -6);
     }
 
-    private static function footPrint($string)
+    private static function footPrint(string $string)
     {
         $hash = rtrim(base64_encode(hash('md5', $string, TRUE)), '=');
         $hash = str_replace('+', '-', $hash); // Get rid of characters which need encoding in URLs.
@@ -329,7 +329,7 @@ class flowDb
         return $hash;
     }
 
-    private static function tagsToArray($obj)
+    private static function tagsToArray(object $obj)
     {
         foreach($obj as $value) {
             $tags[] = (string) $value['term'];
@@ -337,7 +337,7 @@ class flowDb
         return $tags;
     }
 
-    private static function urlToPermalink($url)
+    private static function urlToPermalink(string $url)
     {
         return substr($url, -6);
     }
