@@ -159,18 +159,6 @@ class flowDb
         return $result;
     }
 
-    public function getSharerUpdatedFeed($id)
-    {
-        $query = 'SELECT updated FROM sharers WHERE id = :id;';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-        $stmt->closeCursor();
-        $stmt = NULL;
-        return $result[0]->updated;
-    }
-
     public function setSharerUpdatedFeed($id, $time)
     {
         $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
