@@ -159,6 +159,13 @@ class flowDb
         return $result;
     }
 
+    /**
+     * Update sharer entry with updated entry from atom feed
+     *
+     * @param int $id id of sharer
+     * @param int $time timestamp of updated entry
+     * @return void
+     */
     public function setSharerUpdatedFeed($id, $time)
     {
         $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
