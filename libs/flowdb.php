@@ -261,28 +261,6 @@ class flowDb
 
     // Start # private functions ----------------------------------------------
 
-    private function linkNotExists(string $uri)
-    {
-        $return = '';
-        if (!empty($uri)) {
-            $hash  = md5($uri);
-            $query = 'SELECT sharer FROM flow WHERE link_hash = :hash ORDER BY published ASC LIMIT 1;';
-            $stmt  = dbConnexion::getInstance()->prepare($query);
-            $stmt->bindValue(':hash', $hash, PDO::PARAM_STR);
-            $stmt->execute();
-            $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-            $stmt->closeCursor();
-            $stmt = NULL;
-            if (count($result) === 0) {
-                $return = false;
-            }
-            else {
-                $return = (int)$result[0]->sharer;
-            }
-        }
-        return $return;
-    }
-
     private function setLink(string $href, int $published, int $sharer, string $title = '')
     {
         $published = (empty($published)) ? time() : $published; // protect against priority ofr poblished 0
