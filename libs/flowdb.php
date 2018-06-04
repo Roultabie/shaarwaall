@@ -177,6 +177,13 @@ class flowDb
         $stmt = NULL;
     }
 
+    /**
+     * Update sharer the last updated entry from atom feed parsed
+     *
+     * @param int $id id of sharer
+     * @param int $time timestamp of updated entry
+     * @return void
+     */
     public function setSharerLastEntryUpdated($id, $time)
     {
         $query = 'UPDATE sharers SET last_entry_updated = :updated WHERE id = :id';
@@ -188,6 +195,12 @@ class flowDb
         $stmt = NULL;
     }
 
+    /**
+     * Add tags in tags table, if exists, update hit+1
+     *
+     * @param array $tags list of tags
+     * @return void
+     */
     public function setTags($tags)
     {
         if (is_array($tags)) { // Insert or update tag table if tag exist
