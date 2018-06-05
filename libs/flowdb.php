@@ -261,6 +261,16 @@ class flowDb
 
     // Start # private functions ----------------------------------------------
 
+    /**
+     * Add or update link in link table if exists. link is unique, if exists update
+     * sharer if published time is older than
+     *
+     * @param string $href
+     * @param integer $published
+     * @param integer $sharer
+     * @param string $title
+     * @return void
+     */
     private function setLink(string $href, int $published, int $sharer, string $title = '')
     {
         $published = (empty($published)) ? time() : $published; // protect against priority ofr poblished 0
@@ -285,6 +295,13 @@ class flowDb
         return $state;
     }
 
+    /**
+     * Return host of url, remove http(s) if needed
+     *
+     * @param string $url url to parse
+     * @param boolean $withScheme
+     * @return string host
+     */
     private static function returnHost(string $url, bool $withScheme = true)
     {
         $scheme = parse_url($url, PHP_URL_SCHEME);
