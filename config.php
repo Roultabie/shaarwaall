@@ -6,4 +6,5 @@ $config = [
     'dbPass' => 'password',
     'tblPrefix' => '',
     'badCertificateAllowed' => true,
+    'threads' => 8,
 ];
