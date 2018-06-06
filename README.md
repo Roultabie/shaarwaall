@@ -9,6 +9,7 @@
         - [Discussion, ergonomie](#discussion-ergonomie)
     - [Fonctionnalités](#fonctionnalités)
     - [Système](#système)
+        - [Mise à jour des données](mise-à-jour-des-données)
 
 ## Ergonomie
 - [ ] Liste affichés des shaares à la "google+".
@@ -36,6 +37,14 @@
 - [ ] possibilité d'une sugestion de collections.
 
 ## Système
-- [x ] ajouter un contrôle de la date de mise à jour du flux avec la date de mise à jour de chaque entrée, ne mettre à jour que si changement, et ou mise à jour en fonction de la date de la dernière entrée mise à jour,
-- [x] actuellement le crowl et la bdd différencient http et https pour un même site, à corriger.
-- [x] séparer dans une table les liens des shaares.
+- [x] ajouter un contrôle de la date de mise à jour du flux avec la date de mise à jour de chaque entrée, ne mettre à jour que si changement, et ou mise à jour en fonction de la date de la dernière entrée mise à jour,
+- [x] actuellement le crowl et la bdd différencient http et https pour un même site, à corriger,
+- [x] séparer dans une table les liens des shaares,
+
+### Mise à jour des données
+- [ ] faire la médiane des shaares pour un shaarer par jour afin de lancer les MAJ en fonction de sa "production",
+- [ ] donc, sauvegarder les temps entre les shaares pour un sharer (table stats dédiée colonne un array[time()] = time() - timestamp($published)) sur la journée, garder au minimun 5 valeur (pour garder une bonne médiane même le lendemain matin),
+- [x] mettre en place un système de threads afin de faire des mises à jour lancées en même temps en fonction du nombre de threads définis en configuration (fonction ignore_user_abort PHP pour libérer chaque thread lancée par un cron externe),
+- [ ] aller chercher les flux 1 à 1 en fonction de la médiane avec uniquement 1 entrée pour vérifier si mise à jour,
+- [ ] si mise à jour les placer dans les thread, chaque thread contient les shaarers du plus grand partageur au plus petit, équitablement,
+- [ ] retravailler les points précédents. 
