@@ -218,6 +218,18 @@ class flowDb
     }
 
     /**
+     * Clean date atom format, remove T and ...
+     *
+     * @param string $date in atom format.
+     * @return string in format Y-m-d -H:i:s.
+     */
+    public static function filterDate(string $date)
+    {
+        $date = str_replace('T', ' ', $date);
+        return substr($date, 0, -6);
+    }
+
+    /**
      * Transform atom feed parsed by simplexmlelement into array.
      *
      * @param object $obj a simplexml atom feed.
@@ -307,18 +319,6 @@ class flowDb
         $scheme = parse_url($url, PHP_URL_SCHEME);
         $host   = parse_url($url, PHP_URL_HOST);
         return ($withScheme) ? $scheme . '://' . $host : $host;
-    }
-
-    /**
-     * Clean date atom format, remove T and ...
-     *
-     * @param string $date in atom format.
-     * @return string in format Y-m-d -H:i:s.
-     */
-    private static function filterDate(string $date)
-    {
-        $date = str_replace('T', ' ', $date);
-        return substr($date, 0, -6);
     }
 
     /**
