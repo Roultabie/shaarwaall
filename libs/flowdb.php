@@ -262,14 +262,14 @@ class flowDb
     // Start # private functions ----------------------------------------------
 
     /**
-     * Add or update link in link table if exists. link is unique, if exists update
-     * sharer if published time is older than
+     * Add or update link in link table if exists. link is unique, if exists update.
+     * sharer if published time is older than.
      *
-     * @param string $href
-     * @param integer $published
-     * @param integer $sharer
-     * @param string $title
-     * @return void
+     * @param string $href current link.
+     * @param integer $published timestamp of published date.
+     * @param integer $sharer id of sharer.
+     * @param string $title title of current link
+     * @return int id of current link added or updated.
      */
     private function setLink(string $href, int $published, int $sharer, string $title = '')
     {
@@ -296,11 +296,11 @@ class flowDb
     }
 
     /**
-     * Return host of url, remove http(s) if needed
+     * Return host of url, remove http(s) if needed.
      *
-     * @param string $url url to parse
-     * @param boolean $withScheme
-     * @return string host
+     * @param string $url url to parse.
+     * @param boolean $withScheme.
+     * @return string host.
      */
     private static function returnHost(string $url, bool $withScheme = true)
     {
@@ -309,12 +309,24 @@ class flowDb
         return ($withScheme) ? $scheme . '://' . $host : $host;
     }
 
-    private static function filterDate($date)
+    /**
+     * Clean date atom format, remove T and ...
+     *
+     * @param string $date in atom format.
+     * @return string in format Y-m-d -H:i:s.
+     */
+    private static function filterDate(string $date)
     {
         $date = str_replace('T', ' ', $date);
         return substr($date, 0, -6);
     }
 
+    /**
+     * Return a string type hash of string.
+     *
+     * @param string $string string to hash.
+     * @return string
+     */
     private static function footPrint(string $string)
     {
         $hash = rtrim(base64_encode(hash('md5', $string, TRUE)), '=');
@@ -324,6 +336,12 @@ class flowDb
         return $hash;
     }
 
+    /**
+     * Return array of object tags parsed by xmlsimpleelement.
+     *
+     * @param object $obj xml simplelement category.
+     * @return array tags list.
+     */
     private static function tagsToArray(object $obj)
     {
         foreach($obj as $value) {
@@ -332,6 +350,12 @@ class flowDb
         return $tags;
     }
 
+    /**
+     * Remove url part of link given.
+     *
+     * @param string $url.
+     * @return string shaarli permalink.
+     */
     private static function urlToPermalink(string $url)
     {
         return substr($url, -6);
