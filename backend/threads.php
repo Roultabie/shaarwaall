@@ -18,11 +18,18 @@ class getFeedUpdate extends Thread
             $feedUpdate = flowDb::filterDate($feedUpdate);
             $oldUpdate  = $sharer->updated;
             $newUpdate  = strtotime($feedUpdate);
-            if ($oldUpdate < $newUpdate) {
+            if ((int) $oldUpdate < (int) $newUpdate) {
                 $feed    = feedParser::loadFeed($sharer->uri, $this->nb);
                 if ($feed) {
                     $entry = flowDb::flowToArray($feed->entry, 'ASC', 'updated');
                     $flow  = $this->flowDb->setFlow($sharer, $entry);
+                    if (is_array($flow)) {
+                        if (is_array($flow['tags'])) {
+                            $this->flowDb->setTags($flow['tags']);
+                        }
+                        $this->flowDb->setSharerLastEntryUpdated($sharer->id, $flow['update']);
+                        $this->flowDb->setSharerUpdatedFeed($sharer->id, $newUpdate);
+                    }
                 }
             }
         }

@@ -30,12 +30,14 @@ class dbConnexion
         }
     }
 
-    private static function setDbInfos()
+    public static function setDbInfos()
     {
-        self::$dbHost = $GLOBALS['config']['dbHost'];
-        self::$dbName = $GLOBALS['config']['dbName'];
-        self::$dbUser = $GLOBALS['config']['dbUser'];
-        self::$dbPass = $GLOBALS['config']['dbPass'];
+        if (!isset(self::$dbHost)) {
+            self::$dbHost = $GLOBALS['config']['dbHost'];
+            self::$dbName = $GLOBALS['config']['dbName'];
+            self::$dbUser = $GLOBALS['config']['dbUser'];
+            self::$dbPass = $GLOBALS['config']['dbPass'];
+        }
     }
 }
 ?>
