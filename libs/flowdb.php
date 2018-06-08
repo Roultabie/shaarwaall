@@ -18,12 +18,12 @@ class flowDb
         if (is_array($datas)) {
             $query = 'INSERT INTO flow (
                 sharer, link, title, content, tags, permalink,
-                published, updated, first_share, id)
+                published, updated, id)
                 VALUES (:sharer, :link, :title, :content, :tags,
-                :permalink, :published, :updated, :first_share, :id)
+                :permalink, :published, :updated, :id)
                 ON DUPLICATE KEY UPDATE link = :link,
                 title = :title, content = :content, tags = :tags,
-                updated = :updated, first_share = :first_share';
+                updated = :updated';
             $stmt = dbConnexion::getInstance()->prepare($query);
             $stmt->bindParam(':sharer', $sharer, PDO::PARAM_INT);
             $stmt->bindParam(':link', $link, PDO::PARAM_STR);
@@ -33,7 +33,6 @@ class flowDb
             $stmt->bindParam(':permalink', $permalink, PDO::PARAM_STR);
             $stmt->bindParam(':published', $published, PDO::PARAM_STR);
             $stmt->bindParam(':updated', $updated, PDO::PARAM_STR);
-            $stmt->bindParam(':first_share', $firstShare, PDO::PARAM_STR);
             $stmt->bindParam(':id', $footPrint, PDO::PARAM_STR);
 
             foreach($datas as $entry) {
