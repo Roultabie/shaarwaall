@@ -33,7 +33,9 @@ class feedParser
         $object = '';
         $feed = self::setFeedUrl($uri, $nb);
         if (self::isvalid($feed)) {
-            $result = simplexml_load_file($feed, 'SimpleXMLElement', LIBXML_NOCDATA);
+            $string = file_get_contents($feed);
+            $string = mb_convert_encoding($string, 'UTF-8');
+            $result = simplexml_load_string($string, 'SimpleXMLElement', LIBXML_NOCDATA);
         }
         else {
             $result = false;
@@ -56,7 +58,7 @@ class feedParser
         $result = false;
         if (!empty($uri)) {
             if (strpos($uri, 'http') === 0) {
-                if ($GLOBALS['config']['badCertificateAllowed']) {
+                if ($GLOBALS['config']['badCertificateAllowed'] || true) {
                     stream_context_set_default( [
                         'ssl' => [
                             'verify_peer' => false,
