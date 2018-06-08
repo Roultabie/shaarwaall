@@ -6,7 +6,8 @@ class getFeedUpdate extends Thread
     {
         $this->sharers  = $sharers;
         $this->flowDb   = $flowDb;
-        $this->nb      = 15;
+        $this->nb       = 15;
+        //$this->config   = $config;
     }
 
     public function run()
@@ -15,20 +16,15 @@ class getFeedUpdate extends Thread
             $atom       = feedParser::loadFeed($sharer->uri, 1);
             $feedUpdate = (string) $atom->updated;
             $feedUpdate = flowDb::filterDate($feedUpdate);
-            $oldUpdate  = $this->sharer->updated;
+            $oldUpdate  = $sharer->updated;
             $newUpdate  = strtotime($feedUpdate);
             if ($oldUpdate < $newUpdate) {
-                $feed   = feedParser::loadFeed($sharer->uri, $this->nb);
-                $entry  = flowDb::flowToArray($feed->entry, 'ASC', 'updated');
-                $result = $this->flowDb->setFlow($sharer, $entry);
-                if (is_array($entry)) {
-                    $this->flowDb->setTags($result['tags']);
-                    $this->flowDb->setSharerLastEntryUpdated($sharer->id, $result['update']);
-                    $this->flowDb->setSharerUpdatedFeed($sharer->id, $result['update']);
+                $feed    = feedParser::loadFeed($sharer->uri, $this->nb);
+                if ($feed) {
+                    $entry = flowDb::flowToArray($feed->entry, 'ASC', 'updated');
+                    $flow  = $this->flowDb->setFlow($sharer, $entry);
                 }
-
             }
-            //var_dump($url);
         }
     }
 }
