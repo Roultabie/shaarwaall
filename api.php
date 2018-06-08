@@ -37,13 +37,11 @@ function initThreads($sharers)
 
 $toProcess = initThreads($sharers);
 
-var_dump(count($toProcess));
 foreach ($toProcess as $process) {
-    $t = new getFeedUpdate($process);
+    $t = new getFeedUpdate($process, $flowDb);
     $t->start();
     $threads[] = $t;
 }
-var_dump(count($threads));
 
 foreach ($threads as $t) {
     $t->join();
