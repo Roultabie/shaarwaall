@@ -21,9 +21,22 @@ class flowDb
                 published, updated, id)
                 VALUES (:sharer, :link, :title, :content, :tags,
                 :permalink, :published, :updated, :id)
-                ON DUPLICATE KEY UPDATE link = :link,
-                title = :title, content = :content, tags = :tags,
-                updated = :updated';
+                ON DUPLICATE KEY UPDATE link = CASE
+                    WHEN link != VALUES(link) THEN :link
+                    ELSE link
+                END, title = CASE
+                    WHEN title != VALUES(title) THEN :title
+                    ELSE title
+                END, content = CASE
+                    WHEN content != VALUES(content) THEN :content
+                    ELSE content
+                END, tags = CASE
+                    WHEN tags != VALUES(tags) THEN :tags
+                    ELSE tags
+                END, updated = CASE
+                    WHEN updated != VALUES(updated) THEN :updated
+                    ELSE updated
+                END;';
             $stmt = dbConnexion::getInstance()->prepare($query);
             $stmt->bindParam(':sharer', $sharer, PDO::PARAM_INT);
             $stmt->bindParam(':link', $link, PDO::PARAM_STR);
@@ -31,8 +44,8 @@ class flowDb
             $stmt->bindParam(':content', $content, PDO::PARAM_STR);
             $stmt->bindParam(':tags', $taglist, PDO::PARAM_STR);
             $stmt->bindParam(':permalink', $permalink, PDO::PARAM_STR);
-            $stmt->bindParam(':published', $published, PDO::PARAM_STR);
-            $stmt->bindParam(':updated', $updated, PDO::PARAM_STR);
+            $stmt->bindParam(':published', $published, PDO::PARAM_INT);
+            $stmt->bindParam(':updated', $updated, PDO::PARAM_INT);
             $stmt->bindParam(':id', $footPrint, PDO::PARAM_STR);
 
             foreach($datas as $entry) {
