@@ -32,10 +32,12 @@ class feedParser
     {
         $object = '';
         $feed = self::setFeedUrl($uri, $nb);
-        if (self::isvalid($feed)) {
+        $valid = self::isvalid($feed);
+        if ($valid) {
             $string = file_get_contents($feed);
             $string = mb_convert_encoding($string, 'UTF-8');
-            $result = simplexml_load_string($string, 'SimpleXMLElement', LIBXML_NOCDATA);
+            $result = $valid;
+            $result['xml'] = simplexml_load_string($string, 'SimpleXMLElement', LIBXML_NOCDATA);
         }
         else {
             $result = false;
@@ -67,13 +69,23 @@ class feedParser
                         ],
                     ]);
                 }
+                //$echo $uri . PHP_EOL;
                 $headers = get_headers($uri, 1);
-                if ($headers && $headers[0] === 'HTTP/1.1 200 OK') {
-                    if (strpos($headers['Content-Type'], 'application/atom+xml') === 0) {
-                        $result = true;
+                //var_dump($headers);
+                if ($headers) {
+                    if ($headers[0] === 'HTTP/1.1 200 OK') {
+                        if (strpos($headers['Content-Type'], 'application/atom+xml') === 0) {
+                            $result['status'] = 200;
+                        }
+                    }
+                    elseif ($headers[0] === 'HTTP/1.1 301 Moved Permanently') {
+                        echo '301' . PHP_EOL;
+                        $result['status'] = 301;
+                        $result['location'] = $headers['Location'];
                     }
                 }
                 else {
+                    //var_dump($headers);
                     $result = false;
                 }
             }
