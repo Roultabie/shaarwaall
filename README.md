@@ -48,3 +48,4 @@
 - [ ] aller chercher les flux 1 à 1 en fonction de la médiane avec uniquement 1 entrée pour vérifier si mise à jour,
 - [ ] si mise à jour les placer dans les thread, chaque thread contient les shaarers du plus grand partageur au plus petit, équitablement,
 - [ ] retravailler les points précédents. 
+- [ ] mettre en place un système de "plugins" qui permettrai d'ajouter des sources externes à shaarli de type pluxml (warrior du dimanche, petit etre malfaisant) ou blogotext (horyax http://horyax.fr/news/)
