@@ -187,43 +187,7 @@ class flowDb
         $stmt = NULL;
         return $result;
     }
-
-    /**
-     * Update sharer entry with updated entry from atom feed.
-     *
-     * @param int $id id of sharer.
-     * @param int $time timestamp of updated entry.
-     * @return void
-     */
-    public function setSharerUpdatedFeed(int $id, int $time)
-    {
-        $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        $stmt->closeCursor();
-        $stmt = NULL;
-    }
-
-    /**
-     * Update sharer the last updated entry from atom feed parsed.
-     *
-     * @param int $id id of sharer.
-     * @param int $time timestamp of updated entry.
-     * @return void
-     */
-    public function setSharerLastEntryUpdated(int $id, int $time)
-    {
-        $query = 'UPDATE sharers SET last_entry_updated = :updated WHERE id = :id';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        $stmt->closeCursor();
-        $stmt = NULL;
-    }
-
+    
     /**
      * Add tags in tags table, if exists, update hit+1.
      *
