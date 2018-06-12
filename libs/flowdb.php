@@ -237,16 +237,18 @@ class flowDb
         $minDate = (empty($minDate)) ? strtotime('1970-01-01 00:00:00') : strtotime($minDate);
         $maxDate = (empty($maxDate)) ? strtotime($curDate) : strtotime($maxDate);
         foreach($obj as $value) {
-            $published = strtotime(self::filterDate($value->published));
-            $updated   = strtotime(self::filterDate($value->updated));
+            // $published = strtotime(self::filterDate($value->published));
+            // $updated   = strtotime(self::filterDate($value->updated));
+            $published = strtotime($value->published);
+            $updated   = strtotime($value->updated);
             $key = ($sort === 'published') ? $published : $updated;
             if ($key >= $minDate && $key <=$maxDate) {
                 $entry[$key] = [
                     'title'     => (string) $value->title,
                     'link'      => (string) $value->link['href'],
                     'permalink' => (string) $value->id,
-                    'published' => strtotime(self::filterDate($value->published)),
-                    'updated'   => strtotime(self::filterDate($value->updated)),
+                    'published' => $published,
+                    'updated'   => $updated,
                     'content'   => (string) $value->content,
                     'tags'      => self::tagsToArray($value->category),
                 ];

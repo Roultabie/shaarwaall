@@ -6,7 +6,7 @@ class getFeedUpdate extends Thread
     {
         $this->sharers  = $sharers;
         $this->flowDb   = $flowDb;
-        $this->nb       = 15;
+        $this->nb       = 100;
         //$this->config   = $config;
     }
 
@@ -17,12 +17,10 @@ class getFeedUpdate extends Thread
             if (is_array($feed)) {
                 if ($feed['status'] === 200) {
                     $feedUpdate = (string) $feed['xml']->updated;
-                    $feedUpdate = flowDb::filterDate($feedUpdate);
                     $oldUpdate  = $sharer->updated;
                     $newUpdate  = strtotime($feedUpdate);
                     if ((int) $oldUpdate < (int) $newUpdate) {
                         $entry = flowDb::flowToArray($feed['xml']->entry, 'ASC', 'updated');
-                        //var_dump($entry);
                         $flow  = $this->flowDb->setFlow($sharer, $entry);
                         if (is_array($flow)) {
                             if (is_array($flow['tags'])) {
