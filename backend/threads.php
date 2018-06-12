@@ -22,7 +22,6 @@ class getFeedUpdate extends Thread
                     $newUpdate  = strtotime($feedUpdate);
                     if ((int) $oldUpdate < (int) $newUpdate) {
                         $entry = flowDb::flowToArray($feed['xml']->entry, 'ASC', 'updated');
-                        echo $sharer->id . ': ' . $feed['xml']->updated;
                         $flow  = $this->flowDb->setFlow($sharer, $entry);
                         if (is_array($flow)) {
                             if (is_array($flow['tags'])) {
