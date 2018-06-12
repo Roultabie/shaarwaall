@@ -22,25 +22,26 @@ class getFeedUpdate extends Thread
                     $newUpdate  = strtotime($feedUpdate);
                     if ((int) $oldUpdate < (int) $newUpdate) {
                         $entry = flowDb::flowToArray($feed['xml']->entry, 'ASC', 'updated');
+                        //var_dump($entry);
                         $flow  = $this->flowDb->setFlow($sharer, $entry);
                         if (is_array($flow)) {
                             if (is_array($flow['tags'])) {
                                 $this->flowDb->setTags($flow['tags']);
                             }
-                            $sharer->updated            = strtotime(flowDb::filterDate($newUpdate));
-                            $sharer->last_entry_updated = strtotime(flowDb::filterDate($flow['update']));
+                            $sharer->updated            = $newUpdate;
+                            $sharer->last_entry_updated = $flow['update'];
                         }
                     }
                     $sharer->status = $feed['status'];
                 }
                 elseif ($feed['status'] === 301) {
                     if (!is_array($feed['location'])) {
-                        $scheme               = parse_url($feed['location'], PHP_URL_SCHEME);
-                        $host                 = parse_url($feed['location'], PHP_URL_HOST);
-                        $path                 = parse_url($feed['location'], PHP_URL_PATH);
-                        $url                  = $scheme . '://' . $host . $path;
-                        $sharer->old_id = $sharer->id;
-                        $sharer->uri    = $url;
+                        // $scheme               = parse_url($feed['location'], PHP_URL_SCHEME);
+                        // $host                 = parse_url($feed['location'], PHP_URL_HOST);
+                        // $path                 = parse_url($feed['location'], PHP_URL_PATH);
+                        // $url                  = $scheme . '://' . $host . $path;
+                        // $sharer->old_id = $sharer->id;
+                        // $sharer->uri    = $url;
                     }
                     $sharer->status = $feed['status'];
                     
