@@ -13,29 +13,24 @@ class getFeedUpdate extends Thread
     public function run()
     {
         foreach ($this->sharers as $sharer) {
-            $feed  = feedParser::loadFeed($sharer->uri, 1);
+            $feed  = feedParser::loadFeed($sharer->uri, $this->nb);
             if (is_array($feed)) {
                 if ($feed['status'] === 200) {
                     $feedUpdate = (string) $feed['xml']->updated;
                     $feedUpdate = flowDb::filterDate($feedUpdate);
                     $oldUpdate  = $sharer->updated;
                     $newUpdate  = strtotime($feedUpdate);
+                    var_dump($feedUpdated);
                     if ((int) $oldUpdate < (int) $newUpdate) {
-                        $atom = feedParser::loadFeed($sharer->uri, $this->nb);
-                        if (is_array($atom)) {
-                            if ($atom['status'] === 200) {
-                                $entry = flowDb::flowToArray($atom['xml']->entry, 'ASC', 'updated');
-                                $flow  = $this->flowDb->setFlow($sharer, $entry);
-                                if (is_array($flow)) {
-                                    if (is_array($flow['tags'])) {
-                                        $this->flowDb->setTags($flow['tags']);
-                                    }
-                                    $sharer->updated            = strtotime(flowDb::filterDate($newUpdate));
-                                    $sharer->last_entry_updated = strtotime(flowDb::filterDate($flow['update']));
-                                    // $this->flowDb->setSharerLastEntryUpdated($sharer->id, $flow['update']);
-                                    // $this->flowDb->setSharerUpdatedFeed($sharer->id, $newUpdate);
-                                }
+                        $entry = flowDb::flowToArray($feed['xml']->entry, 'ASC', 'updated');
+                        echo $sharer->id . ': ' . $feed['xml']->updated;
+                        $flow  = $this->flowDb->setFlow($sharer, $entry);
+                        if (is_array($flow)) {
+                            if (is_array($flow['tags'])) {
+                                $this->flowDb->setTags($flow['tags']);
                             }
+                            $sharer->updated            = strtotime(flowDb::filterDate($newUpdate));
+                            $sharer->last_entry_updated = strtotime(flowDb::filterDate($flow['update']));
                         }
                     }
                     $sharer->status = $feed['status'];

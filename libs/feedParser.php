@@ -30,73 +30,30 @@ class feedParser
     */
     public static function loadFeed($uri, $nb = 0)
     {
-        $object = '';
         $feed = self::setFeedUrl($uri, $nb);
-        $valid = self::isvalid($feed);
-        if ($valid) {
-            $string = file_get_contents($feed);
-            $string = mb_convert_encoding($string, 'UTF-8');
-            $result = $valid;
-            $result['xml'] = simplexml_load_string($string, 'SimpleXMLElement', LIBXML_NOCDATA);
+        $curl = curl_init($feed);
+        //curl_setopt($curl, CURLOPT_HEADER, true);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 20);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.A.B.C Safari/525.13');
+        $content     = curl_exec($curl);
+        $httpCode    = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $contentType = curl_getinfo($curl, CURLINFO_CONTENT_TYPE);
+        if ($content) {
+            if ($httpCode === 200) {
+                if (strpos($contentType, 'application/atom+xml') === 0) {
+                    $content       = mb_convert_encoding($content, 'UTF-8');
+                    $result['xml'] = simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
+                }
+            }
+            elseif ($httpCode === 301) {
+                $result['location'] = $headers['Location'];
+            }
+            $result['status'] = $httpCode;
         }
         else {
             $result = false;
-        }
-        return $result;
-    }
-
-    /**
-    * Check if uri exists,is accessible and if it's a valid atom feed
-    *
-    * @param $uri uri to parse, this can be on local filesystem or a web ressource.
-    *
-    * @return bool true if $uri is a valid atom feed, else false.
-    *
-    * @access private
-    * @since Method available since start of project
-    */
-    private static function isValid($uri)
-    {
-        $result = false;
-        if (!empty($uri)) {
-            if (strpos($uri, 'http') === 0) {
-                if ($GLOBALS['config']['badCertificateAllowed'] || true) {
-                    stream_context_set_default( [
-                        'ssl' => [
-                            'verify_peer' => false,
-                            'verify_peer_name' => false,
-                            'allow_self_signed' => true,
-                        ],
-                    ]);
-                }
-                //$echo $uri . PHP_EOL;
-                $headers = get_headers($uri, 1);
-                //var_dump($headers);
-                if ($headers) {
-                    if ($headers[0] === 'HTTP/1.1 200 OK') {
-                        if (strpos($headers['Content-Type'], 'application/atom+xml') === 0) {
-                            $result['status'] = 200;
-                        }
-                    }
-                    elseif ($headers[0] === 'HTTP/1.1 301 Moved Permanently') {
-                        echo '301' . PHP_EOL;
-                        $result['status'] = 301;
-                        $result['location'] = $headers['Location'];
-                    }
-                }
-                else {
-                    //var_dump($headers);
-                    $result = false;
-                }
-            }
-            elseif (file_exists($uri)) {
-                if (mime_content_type($uri) === "text/xml") {
-                    $result = true;
-                }
-                else {
-                    $result = false;
-                }
-            }
         }
         return $result;
     }
