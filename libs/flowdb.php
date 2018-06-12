@@ -127,14 +127,13 @@ class flowDb
         $stmt = dbConnexion::getInstance()->prepare($query);
         $stmt->bindParam(':title', $title, PDO::PARAM_STR);
         $stmt->bindParam(':subtitle', $subtitle, PDO::PARAM_STR);
-        $stmt->bindParam(':updated', $updated, PDO::PARAM_STR);
+        $stmt->bindParam(':updated', $updated, PDO::PARAM_INT);
         $stmt->bindParam(':feed', $feed, PDO::PARAM_STR);
         $stmt->bindParam(':author', $author, PDO::PARAM_STR);
         $stmt->bindParam(':uri', $uri, PDO::PARAM_STR);
-        $stmt->bindParam(':last_entry_updated', $last_entry_updated, PDO::PARAM_STR);
-        $stmt->bindParam(':status', $status, PDO::PARAM_STR);
+        $stmt->bindParam(':last_entry_updated', $last_entry_updated, PDO::PARAM_INT);
+        $stmt->bindParam(':status', $status, PDO::PARAM_INT);
         if (is_object($data)) {
-            var_dump($data->id);
             if (!empty($data->id)) {
                 $stmt->bindParam(':id', $id, PDO::PARAM_INT);
                 $id = $data->id;
@@ -187,7 +186,7 @@ class flowDb
         $stmt = NULL;
         return $result;
     }
-    
+
     /**
      * Add tags in tags table, if exists, update hit+1.
      *
