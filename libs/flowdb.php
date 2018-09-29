@@ -47,7 +47,6 @@ class flowDb
             $stmt->bindParam(':published', $published, PDO::PARAM_INT);
             $stmt->bindParam(':updated', $updated, PDO::PARAM_INT);
             $stmt->bindParam(':id', $footPrint, PDO::PARAM_STR);
-
             foreach($datas as $entry) {
                 if ($entry['updated'] >= $sharerObject->last_update) {
                     $sharer     = $sharerObject->id;
