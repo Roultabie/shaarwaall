@@ -33,7 +33,7 @@ class feedParser
         $object = '';
         $feed = self::setFeedUrl($uri, $nb);
         if (self::isvalid($feed)) {
-            $string = file_get_contents($feed);
+            $string = @file_get_contents($feed);
             $string = mb_convert_encoding($string, 'UTF-8');
             $result = simplexml_load_string($string, 'SimpleXMLElement', LIBXML_NOCDATA);
         }
@@ -67,7 +67,7 @@ class feedParser
                         ],
                     ]);
                 }
-                $headers = get_headers($uri, 1);
+                $headers = @get_headers($uri, 1);
                 if ($headers && $headers[0] === 'HTTP/1.1 200 OK') {
                     if (strpos($headers['Content-Type'], 'application/atom+xml') === 0) {
                         $result = true;
