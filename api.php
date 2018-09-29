@@ -6,7 +6,7 @@ require_once 'libs/feedParser.php';
 require_once 'libs/flowdb.php';
 require_once 'backend/threads.php';
 
-ini_set('default_socket_timeout', 10);
+ini_set('default_socket_timeout', 20);
 
 $shaarwaal  = new shaarwaall();
 $feedParser = new feedParser();

@@ -115,35 +115,51 @@ class flowDb
      */
     public function setSharer($data)
     {
-        $query = 'INSERT IGNORE INTO sharers (title, subtitle, updated, feed, author, uri)
-            VALUES (:title, :subtitle, :updated, :feed, :author, :uri);';
+        if (empty($data->id)) {
+            $query = 'INSERT INTO sharers (title, subtitle, updated, feed, author, uri, last_entry_updated, status)
+                VALUES (:title, :subtitle, :updated, :feed, :author, :uri, :last_entry_updated, :status);';
+        }
+        else {
+            $query = 'UPDATE sharers SET title = :title, subtitle = :subtitle, updated = :updated, feed = :feed, author = :author,
+                            uri = :uri, last_entry_updated = :last_entry_updated, status = :status WHERE id = :id;';
+        }
         $stmt = dbConnexion::getInstance()->prepare($query);
         $stmt->bindParam(':title', $title, PDO::PARAM_STR);
         $stmt->bindParam(':subtitle', $subtitle, PDO::PARAM_STR);
-        $stmt->bindParam(':updated', $updated, PDO::PARAM_STR);
+        $stmt->bindParam(':updated', $updated, PDO::PARAM_INT);
         $stmt->bindParam(':feed', $feed, PDO::PARAM_STR);
         $stmt->bindParam(':author', $author, PDO::PARAM_STR);
         $stmt->bindParam(':uri', $uri, PDO::PARAM_STR);
+        $stmt->bindParam(':last_entry_updated', $last_entry_updated, PDO::PARAM_INT);
+        $stmt->bindParam(':status', $status, PDO::PARAM_INT);
         if (is_object($data)) {
-            $title    = $data->title;
-            $subtitle = $data->subtitle;
-            $updated  = strtotime(self::filterDate($data->updated));
-            $feed     = $data->author->uri . '?' . http_build_query(['do' => 'atom']);
-            $author   = $data->author->name;
-            $uri      = $data->author->uri;
-            $result   = $stmt->execute();
+            if (!empty($data->id)) {
+                $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+                $id = $data->id;
+            } 
+            $title              = $data->title;
+            $subtitle           = $data->subtitle;
+            $updated            = $data->updated;
+            $feed               = $data->uri . '?' . http_build_query(['do' => 'atom']);
+            $author             = $data->author;
+            $uri                = $data->uri;
+            $last_entry_updated = $data->last_entry_updated; 
+            $status             = $data->status;
+            $result             = $stmt->execute();
             $stmt->closeCursor();
             $stmt = NULL;
             $return = ($result) ? dbConnexion::getInstance()->lastInsertId() : $false;
         }
         elseif (is_array($data)) {
-            $title    = $data['title'];
-            $subtitle = $data['subtitle'];
-            $updated  = strtotime(self::filterDate($data['updated']));
-            $feed     = $data['uri'] . '?' . http_build_query(['do' => 'atom']);
-            $author   = $data['name'];
-            $uri      = $data['uri'];
-            $result   = $stmt->execute();
+            $title      = $data['title'];
+            $subtitle   = $data['subtitle'];
+            $updated    = strtotime(self::filterDate($data['updated']));
+            $feed       = $data['uri'] . '?' . http_build_query(['do' => 'atom']);
+            $author     = $data['name'];
+            $uri        = $data['uri'];
+            $lastUpdate = $data['lastUpdate'];
+            $status     = $data['status'];
+            $result     = $stmt->execute();
             $stmt->closeCursor();
             $stmt = NULL;
             $return = ($result) ? dbConnexion::getInstance()->lastInsertId() : $false;
@@ -161,49 +177,13 @@ class flowDb
      */
     public function getSharers()
     {
-        $query = 'SELECT id, title, updated, feed, uri, last_entry_updated FROM sharers;';
+        $query = 'SELECT id, title, subtitle, updated, feed, author, uri, last_entry_updated, status FROM sharers;';
         $stmt  = dbConnexion::getInstance()->prepare($query);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_OBJ);
         $stmt->closeCursor();
         $stmt = NULL;
         return $result;
-    }
-
-    /**
-     * Update sharer entry with updated entry from atom feed.
-     *
-     * @param int $id id of sharer.
-     * @param int $time timestamp of updated entry.
-     * @return void
-     */
-    public function setSharerUpdatedFeed(int $id, int $time)
-    {
-        $query = 'UPDATE sharers SET updated = :updated WHERE id = :id';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        $stmt->closeCursor();
-        $stmt = NULL;
-    }
-
-    /**
-     * Update sharer the last updated entry from atom feed parsed.
-     *
-     * @param int $id id of sharer.
-     * @param int $time timestamp of updated entry.
-     * @return void
-     */
-    public function setSharerLastEntryUpdated(int $id, int $time)
-    {
-        $query = 'UPDATE sharers SET last_entry_updated = :updated WHERE id = :id';
-        $stmt  = dbConnexion::getInstance()->prepare($query);
-        $stmt->bindValue(':updated', $time, PDO::PARAM_INT);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-        $stmt->closeCursor();
-        $stmt = NULL;
     }
 
     /**
@@ -229,18 +209,6 @@ class flowDb
     }
 
     /**
-     * Clean date atom format, remove T and ...
-     *
-     * @param string $date in atom format.
-     * @return string in format Y-m-d -H:i:s.
-     */
-    public static function filterDate(string $date)
-    {
-        $date = str_replace('T', ' ', $date);
-        return substr($date, 0, -6);
-    }
-
-    /**
      * Transform atom feed parsed by simplexmlelement into array.
      *
      * @param object $obj a simplexml atom feed.
@@ -256,16 +224,18 @@ class flowDb
         $minDate = (empty($minDate)) ? strtotime('1970-01-01 00:00:00') : strtotime($minDate);
         $maxDate = (empty($maxDate)) ? strtotime($curDate) : strtotime($maxDate);
         foreach($obj as $value) {
-            $published = strtotime(self::filterDate($value->published));
-            $updated   = strtotime(self::filterDate($value->updated));
+            // $published = strtotime(self::filterDate($value->published));
+            // $updated   = strtotime(self::filterDate($value->updated));
+            $published = strtotime($value->published);
+            $updated   = strtotime($value->updated);
             $key = ($sort === 'published') ? $published : $updated;
             if ($key >= $minDate && $key <=$maxDate) {
                 $entry[$key] = [
                     'title'     => (string) $value->title,
                     'link'      => (string) $value->link['href'],
                     'permalink' => (string) $value->id,
-                    'published' => strtotime(self::filterDate($value->published)),
-                    'updated'   => strtotime(self::filterDate($value->updated)),
+                    'published' => $published,
+                    'updated'   => $updated,
                     'content'   => (string) $value->content,
                     'tags'      => self::tagsToArray($value->category),
                 ];
