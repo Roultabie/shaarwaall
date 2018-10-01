@@ -1,0 +1,3 @@
+[submodule "timply"]
+	path = timply
+	url = https://github.com/Roultabie/timply.git

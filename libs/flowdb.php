@@ -83,6 +83,30 @@ class flowDb
         }
     }
 
+    public function getFlow($limit = 10)
+    {
+        $query = 'SELECT
+                  last.sharer, last.content, last.permalink, last.published,
+                  sharer1.title AS lTitle, sharer1.uri AS lUri,
+                  links.href, links.published,
+                  parent.sharer AS pSharer, parent.content AS pContent,
+                  parent.permalink AS pPermalink, parent.published AS pPublished,
+                  sharer2.title AS oTitle
+                  FROM flow AS last
+                  INNER JOIN sharers AS sharer1 ON last.sharer = sharer1.id
+                  INNER JOIN links ON last.link = links.id
+                  INNER JOIN flow AS parent ON links.published = parent.published AND links.id = parent.link
+                  INNER JOIN sharers AS sharer2 ON parent.sharer = sharer2.id
+                  ORDER BY last.published DESC LIMIT :limit';
+        $stmt = dbConnexion::getInstance()->prepare($query);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $stmt->closeCursor();
+        $stmt = NULL;
+        return $result;
+    }
+
     /**
      * Return object of current sharer requested by $res if success.
      * $ressource can be id or url of a sharer.
