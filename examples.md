@@ -58,3 +58,12 @@ if (is_array($sharers)) {
     }
 }
 ```
+
+## Get flow
+```
+$result = $flowDb->getFlow();
+
+foreach ($result as $key => $value) {
+    
+}
+```
