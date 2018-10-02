@@ -74,10 +74,6 @@
   .masonry img {
       width: 100%;
   }
-  .masonry a, .masonry a:hover, .masonry a:focus, .masonry a:active, .masonry a:visited {
-    color: #333 !important;
-    text-decoration: none;
-  }
   .media ~ .text {
     border-bottom: 1px solid  rgba(0, 0, 0, 0.4);
   }
@@ -92,13 +88,6 @@
   img {
       margin: 0 !important;
   }
-  .author {
-    margin: auto 1em;
-  }
   .firstSharer {
-    margin: auto 1em;
-    border-top: 1px solid  rgba(0, 0, 0, 0.4);
-  }
-  .firstSharer p {
-    color: rgba(0, 0, 0, 0.4);
+    color: rgba(0, 0, 0, 0.1) !important;
   }
