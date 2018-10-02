@@ -4,53 +4,49 @@ require_once 'libs/shaarwaall.php';
 require_once 'libs/mysql.php';
 require_once 'libs/feedParser.php';
 require_once 'libs/flowdb.php';
+require_once 'timply/timply.php';
 
 $shaarlist  = 'https://raw.githubusercontent.com/Oros42/shaarlis_list/master/shaarlis.json';
 
 $shaarwaal  = new shaarwaall();
 $feedParser = new feedParser();
 $flowDb     = new flowDb();
-$json       = file_get_contents($shaarlist);
 
-// $array      = json_decode($json, true);
-// var_dump($array);
-
-// foreach($array as $rss => $value) {
-//     $data = [
-//         'title'    => $value['text'],
-//         'subtitle' => '',
-//         'uri'      => $value['htmlUrl'],
-//         'name'     => $value['htmlUrl'],
-//         'updated'  => 0,
-//     ];
-//     $flowDb->addSharer($data);
-// }
-
-$sharers = $flowDb->getSharers();
-
-if (is_array($sharers)) {
-    foreach ($sharers as $sharer) {
-        $feed = feedParser::loadFeed($sharer->feed, 10);
-        if ($feed) {
-            $array  = flowDb::flowToArray($feed->entry, 'ASC', 'updated');
-            $result = $flowDb->setElements($sharer, $array);
-            if (is_array($result)) {
-                $flowDb->setTags($result['tags']);
-                $flowDb->setSharerLastEntryUpdated($sharer->id, $result['update']);
-                $flowDb->setSharerUpdatedFeed($sharer->id, $result['update']);
-            }
-        }
-        else {
-            echo "Can't load feed from " . $sharer->feed;
-        }
-    }
+function removePermalink($content)
+{
+    $patterns[] = "/(<br>)?\(<a href=\"(http|https)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?\">Permalink<\/a>\)/";
+    $patterns[] = "/&#8212; <a href=\"(http|https)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?\" title=\"Permalink\">Permalink<\/a>/";
+    $patterns[] = "/&#8212; &lt;a href=&quot;<a href=\"(http|https)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?\">(http|https)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?<\/a>&quot; title=&quot;Permalien&quot;&gt;Permalien&lt;\/a&gt;/";
+    $content    = preg_replace($patterns, '', $content);
+    return $content;
 }
 
-$test = file_get_contents('http://localhost/shaarwaall/sources/tables_creation.sql');
+timply::setUri('templates/halloween');
 
-// $pattern = '/via([\s:]*)?<a href="(?P<href>(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?)">/i';
-// preg_match($pattern, 'via: <o href="http://toto.com/titi.html)">toto</a>', $matches);
+$page = new timply('index.html');
 
-// $path = parse_url('http://daniel.gorgones.net/shaarli/?Edl_Id', PHP_URL_SCHEME);
-//$flowDb->setLink('http://test.com', 111, '', 'Titre de test');
-// var_dump();
+$result = $flowDb->getFlow(50);
+//var_dump($result);
+
+foreach ($result as $value) {
+    $oSharer = '';
+    if ($value->sharer != $value->pSharer) {
+        $pContent = removePermalink($value->pContent);
+        $pSharer = new timply('firstShare.html');
+        $pSharer->setElement('author', $value->pTitle);
+        $pSharer->setElement('description', $pContent);
+        $firstShare = $pSharer->returnHtml();
+        //var_dump($firstShare);
+    }
+    else {
+        $firstShare = '';
+    }
+    $content = removePermalink($value->content);
+    $pSharer = ($value->sharer != $value->pSharer) ? new timply('firstSharer.html') : '';
+    $page->setElement("shaarli", $value->lUri, "Shaare");
+    $page->setElement("author", $value->lTitle, "Shaare");
+    $page->setElement("description", $content, "Shaare");
+    $page->setElement("first-share", $firstShare, "Shaare");
+}
+
+echo $page->returnHtml();
