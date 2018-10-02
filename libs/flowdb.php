@@ -91,7 +91,7 @@ class flowDb
                   links.href, links.published,
                   parent.sharer AS pSharer, parent.content AS pContent,
                   parent.permalink AS pPermalink, parent.published AS pPublished,
-                  sharer2.title AS oTitle
+                  sharer2.title AS pTitle
                   FROM flow AS last
                   INNER JOIN sharers AS sharer1 ON last.sharer = sharer1.id
                   INNER JOIN links ON last.link = links.id
