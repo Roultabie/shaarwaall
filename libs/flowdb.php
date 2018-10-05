@@ -86,7 +86,7 @@ class flowDb
     public function getFlow($limit = 10)
     {
         $query = 'SELECT
-                  last.sharer, last.content, last.permalink, last.published,
+                  last.sharer, last.title AS linkTitle, last.content, last.permalink, last.published,
                   sharer1.title AS lTitle, sharer1.uri AS lUri,
                   links.href, links.published,
                   parent.sharer AS pSharer, parent.content AS pContent,
