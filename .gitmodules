@@ -1,3 +1,6 @@
 [submodule "timply"]
 	path = timply
 	url = https://github.com/Roultabie/timply.git
+[submodule "opengraph"]
+	path = opengraph
+	url = https://github.com/scottmac/opengraph.git

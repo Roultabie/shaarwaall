@@ -2,6 +2,15 @@
 
 ## Default initiatization
 ```
+require_once 'config.php';
+require_once 'threads/feedUpdate.php';
+require_once 'libs/shaarwaall.php';
+require_once 'libs/mysql.php';
+require_once 'libs/feedParser.php';
+require_once 'libs/flowdb.php';
+require_once 'timply/timply.php';
+require_once 'opengraph/OpenGraph.php';
+
 $shaarwaal  = new shaarwaall();
 $feedParser = new feedParser();
 $flowDb     = new flowDb();
@@ -35,27 +44,50 @@ foreach($array as $rss => $value) {
 $sharers = $flowDb->getSharers();
 ```
 
-## Set shaares to DB
+### Set Shaares to DB
+```
+$sharers = $flowDb->getSharers();
+
+$nbSharers  = count($sharers);
+$nbElements = ceil($nbSharers/ $GLOBALS['config']['threads']);
+$stack      = array_chunk($sharers, $nbElements);
+
+foreach ($stack as $element) {
+    $t = new feedUpdate($element, $flowDb);
+    $t->start();
+    $threads[] = $t;
+}
+```
+
+
+## Set shaares to DB (without threads)
 ```
 $sharers = $flowDb->getSharers();
 
 if (is_array($sharers)) {
     foreach ($sharers as $sharer) {
-        $feed = feedParser::loadFeed($sharer->feed, 10);
-        if ($feed && is_object($feed['xml']->entry)) {
-            $flow = flowDb::flowToArray($feed['xml']->entry, 'ASC', 'updated');
-            if (is_array($flow)) {
-                $result = $flowDb->setFlow($sharer, $flow);
-                if (is_array($result)) {
-                    if (is_array($result['tags'])) $flowDb->setTags($result['tags']);
-                    $flowDb->setSharer($sharer->id, $result['update']);
+         $feed  = feedParser::loadFeed($sharer->uri, $this->nb);
+        if (is_array($feed)) {
+            if ($feed['status'] === 200) {
+                $feedUpdate = (string) $feed['xml']->updated;
+                $oldUpdate  = $sharer->updated;
+                $newUpdate  = strtotime($feedUpdate);
+                if ((int) $oldUpdate < (int) $newUpdate) {
+                    $entry = flowDb::flowToArray($feed['xml']->entry, 'ASC', 'updated');
+                    $flow  = $this->flowDb->setFlow($sharer, $entry);
+                    if (is_array($flow)) {
+                        if (is_array($flow['tags'])) {
+                            $this->flowDb->setTags($flow['tags']);
+                        }
+                        $sharer->updated            = $newUpdate;
+                        $sharer->last_entry_updated = $flow['update'];
+                    }
                 }
+                $sharer->status = $feed['status'];
             }
         }
-        else {
-            echo "Can't load feed from " . $sharer->feed;
-        }
-    }
+        $this->flowDb->setSharer($sharer);
+}
 }
 ```
 

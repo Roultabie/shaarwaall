@@ -1,12 +1,12 @@
 <?php
-class getFeedUpdate extends Thread
+class feedUpdate extends Thread
 {
     private $sharers;
     public function __construct($sharers, $flowDb)
     {
         $this->sharers  = $sharers;
         $this->flowDb   = $flowDb;
-        $this->nb       = 100;
+        $this->nb       = 'all';
         //$this->config   = $config;
     }
 
