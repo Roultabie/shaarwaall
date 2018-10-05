@@ -83,7 +83,7 @@ class feedParser
     {
         $feedOptions = [
             'do' => 'atom',
-            'nb' => (int)$nb,
+            'nb' => $nb,
             ];
         $uri   = rtrim($uri, '/');
         $feed  = $uri . '/?' . http_build_query($feedOptions);
