@@ -119,7 +119,7 @@ class flowDb
         // res = :res for ID, res LIKE :res for uri
         $cond  = (is_int($res)) ? 'res = :res' : 'res LIKE :res';
         $cond  = ' WHERE ' . $cond;
-        $query = 'SELECT id, title, updated, feed, uri, last_update FROM sharers ' . $cond . ';';
+        $query = 'SELECT id, title, updated, feed, uri, last_update, status FROM sharers ' . $cond . ';';
         $stmt  = dbConnexion::getInstance()->prepare($query);
         $res   = (is_int($res)) ? $res : self::returnHost($res, true);
         $param = (is_int($res)) ? PDO::PARAM_INT : PDO::PARAM_STR;
@@ -177,7 +177,7 @@ class flowDb
         elseif (is_array($data)) {
             $title      = $data['title'];
             $subtitle   = $data['subtitle'];
-            $updated    = strtotime(self::filterDate($data['updated']));
+            $updated    = strtotime($data['updated']);
             $feed       = $data['uri'] . '?' . http_build_query(['do' => 'atom']);
             $author     = $data['name'];
             $uri        = $data['uri'];
